@@ -1,0 +1,5 @@
+{
+    "ada.projectFile": "ada_caser.gpr",
+    "ada.useGnatformat": false,
+    "ada.trace.server": "verbose"
+}

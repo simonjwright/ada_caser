@@ -1,0 +1,12 @@
+name = "ada_caser"
+description = "Applies casing rules to Ada cource code."
+version = "0.1.0-dev"
+
+authors = ["Simon Wright"]
+maintainers = ["Simon Wright <simon@pushface.org>"]
+maintainers-logins = ["simonjwright"]
+licenses = "BSD-3-Clause"
+website = ""
+tags = ["ada", "source", "editor", "casing"]
+
+executables = ["ada_caser"]
