@@ -24,7 +24,7 @@ package body Ada_Caser.Options is
       GNAT.Command_Line.Set_Usage
         (Command_Line_Config,
          Usage => "[switches] sourcefile",
-         Help  => "Format the source file according to the switches");
+         Help  => "Adjust casing in the source file");
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
          Verbose'Access,

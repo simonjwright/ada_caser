@@ -13,18 +13,24 @@ package body Ada_Caser.Dictionaries is
    function Casing_Equals (L, R : String) return Boolean;
    function Casing_Less_Than (L, R : String) return Boolean;
 
-   package Lowercase_String_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (Key_Type => String, Element_Type => String, "<" => Casing_Less_Than,
-      "="      => Casing_Equals);
+   package Lowercase_String_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (Key_Type     => String,
+        Element_Type => String,
+        "<"          => Casing_Less_Than,
+        "="          => Casing_Equals);
 
-   --  For Case_Exceptions, the whole identifier has to mat
+   --  For Case_Exceptions, the whole identifier has to match
    Case_Exceptions     : Lowercase_String_Maps.Map;
    --  For Sub_Case_Exceptions, each 'word' in the identifier matches
    --  separately.
    Sub_Case_Exceptions : Lowercase_String_Maps.Map;
 
-   package Lowercase_String_Sets is new Ada.Containers.Indefinite_Ordered_Sets
-     (Element_Type => String, "<" => Casing_Less_Than, "=" => Casing_Equals);
+   package Lowercase_String_Sets is new
+     Ada.Containers.Indefinite_Ordered_Sets
+       (Element_Type => String,
+        "<"          => Casing_Less_Than,
+        "="          => Casing_Equals);
 
    Reserved : Lowercase_String_Sets.Set;
 
@@ -62,7 +68,7 @@ package body Ada_Caser.Dictionaries is
       when Mode_Error | Name_Error =>
          Messages.Error
            ("Unable to open case exceptions file '" & From_File & "'");
-         raise;
+         raise Notified_Error;
    end Add_Dictionary;
 
    procedure Add_Exception (From_Line : String) is
@@ -82,7 +88,9 @@ package body Ada_Caser.Dictionaries is
    begin
       if Words'Length > 0 then
          if L (Words (1).L) /= '#' then
+            --  Not a comment.
             if L (Words (1).L) = '*' then
+               --  It's a sub-case exception.
                declare
                   Word : constant String := L (Words (1).L + 1 .. Words (1).U);
                begin
@@ -94,6 +102,7 @@ package body Ada_Caser.Dictionaries is
                   end if;
                end;
             else
+               --  It's a whole word exception.
                declare
                   Word : constant String := L (Words (1).L .. Words (1).U);
                begin
@@ -116,11 +125,13 @@ package body Ada_Caser.Dictionaries is
       use Ada.Strings.Maps.Constants;
       use Ada.Strings.Unbounded;
 
-      package String_Vectors is new Ada.Containers.Vectors
-        (Index_Type => Positive, Element_Type => Unbounded_String);
+      package String_Vectors is new
+        Ada.Containers.Vectors
+          (Index_Type   => Positive,
+           Element_Type => Unbounded_String);
 
-      function "+" (R : String) return Unbounded_String renames
-        To_Unbounded_String;
+      function "+" (R : String) return Unbounded_String
+      renames To_Unbounded_String;
       function "+" (R : Unbounded_String) return String renames To_String;
 
       --  A Component consists of lower-case space-separated Words,
@@ -203,11 +214,10 @@ package body Ada_Caser.Dictionaries is
       begin
          for C in Cs'Range loop
             Components.Append
-              (+
-               (Trim
-                  (Translate
-                     (Id (Cs (C).L .. Cs (C).U), To_Mapping ("_", " ")),
-                   Both)));
+              (+(Trim
+                   (Translate
+                      (Id (Cs (C).L .. Cs (C).U), To_Mapping ("_", " ")),
+                    Both)));
          end loop;
       end;
 

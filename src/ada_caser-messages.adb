@@ -1,4 +1,5 @@
 with Ada.Text_IO;
+with Ada.Command_Line;
 with Ada_Caser.Options;
 
 package body Ada_Caser.Messages is
@@ -16,12 +17,13 @@ package body Ada_Caser.Messages is
 
    procedure Warning (Message : String) is
    begin
-      Put_Line ("Warning: " & Message);
+      Put_Line (Standard_Error, "Warning: " & Message);
    end Warning;
 
    procedure Error (Message : String) is
    begin
       Errors := Errors + 1;
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
       Put_Line (Standard_Error, "Error: " & Message);
    end Error;
 
