@@ -10,3 +10,6 @@ website = ""
 tags = ["ada", "source", "editor", "casing"]
 
 executables = ["ada_caser"]
+
+[[depends-on]]
+libadalang = "^25.0.1"

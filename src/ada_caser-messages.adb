@@ -11,7 +11,7 @@ package body Ada_Caser.Messages is
    procedure Info (Message : String) is
    begin
       if Options.Is_Verbose then
-         Put_Line ("Info: " & Message);
+         Put_Line (Standard_Error, "Info: " & Message);
       end if;
    end Info;
 
@@ -20,11 +20,14 @@ package body Ada_Caser.Messages is
       Put_Line (Standard_Error, "Warning: " & Message);
    end Warning;
 
-   procedure Error (Message : String) is
+   procedure Error (Message : String; Quit : Boolean := False) is
    begin
       Errors := Errors + 1;
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
       Put_Line (Standard_Error, "Error: " & Message);
+      if Quit then
+         raise Notified_Error;
+      end if;
    end Error;
 
    function Number_Of_Errors return Natural is (Errors);

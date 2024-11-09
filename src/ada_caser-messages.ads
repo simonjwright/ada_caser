@@ -4,7 +4,7 @@ private package Ada_Caser.Messages is
 
    procedure Warning (Message : String);
 
-   procedure Error (Message : String);
+   procedure Error (Message : String; Quit : Boolean := False);
    --  Sets exit status to Failure.
 
    function Number_Of_Errors return Natural;
