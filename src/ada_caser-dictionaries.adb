@@ -1,11 +1,9 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Characters.Wide_Wide_Latin_9;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
 with Ada.Strings.Wide_Wide_Unbounded;
-with Ada.Text_IO;
 with Ada.Wide_Wide_Text_IO;
 with Ada_Caser.Messages;
 with Ada_Caser.Utilities;
@@ -27,14 +25,6 @@ package body Ada_Caser.Dictionaries is
    --  For Sub_Case_Exceptions, each 'word' in the identifier matches
    --  separately.
    Sub_Case_Exceptions : Lowercase_Wide_Wide_String_Maps.Map;
-
-   package Lowercase_Wide_Wide_String_Sets is new
-     Ada.Containers.Indefinite_Ordered_Sets
-       (Element_Type => Wide_Wide_String,
-        "<"          => Casing_Less_Than,
-        "="          => Casing_Equals);
-
-   Reserved : Lowercase_Wide_Wide_String_Sets.Set;
 
    function Casing_Equals (L, R : Wide_Wide_String) return Boolean is
       use Ada.Strings.Wide_Wide_Fixed;
@@ -167,14 +157,6 @@ package body Ada_Caser.Dictionaries is
          Str   : constant Wide_Wide_String := +S;
          Words : Wide_Wide_String_Vectors.Vector;
       begin
-         --  Check for reserved words, which don't contain underscores
-         --  (spaces by now) and must therefore be whole components.
-         if Reserved.Contains (Str) then
-            Messages.Error
-              ("reserved word '" & To_String (Str) & "' not allowed");
-            raise Notified_Error;
-         end if;
-
          --  Split into words.
          declare
             Ws : constant Utilities.Spans := Utilities.Find_Spans (Str, ' ');
@@ -267,86 +249,87 @@ package body Ada_Caser.Dictionaries is
 
 begin
 
-   --  Save the reserved words (of Ada 95).
-   Reserved.Insert ("abort");
-   Reserved.Insert ("abs");
-   Reserved.Insert ("abstract");
-   Reserved.Insert ("accept");
-   Reserved.Insert ("access");
-   Reserved.Insert ("aliased");
-   Reserved.Insert ("all");
-   Reserved.Insert ("and");
-   Reserved.Insert ("array");
-   Reserved.Insert ("at");
-   Reserved.Insert ("begin");
-   Reserved.Insert ("body");
-   Reserved.Insert ("case");
-   Reserved.Insert ("constant");
-   Reserved.Insert ("declare");
-   Reserved.Insert ("delay");
-   Reserved.Insert ("delta");
-   Reserved.Insert ("digits");
-   Reserved.Insert ("do");
-   Reserved.Insert ("else");
-   Reserved.Insert ("elsif");
-   Reserved.Insert ("end");
-   Reserved.Insert ("entry");
-   Reserved.Insert ("exception");
-   Reserved.Insert ("exit");
-   Reserved.Insert ("for");
-   Reserved.Insert ("function");
-   Reserved.Insert ("generic");
-   Reserved.Insert ("goto");
-   Reserved.Insert ("if");
-   Reserved.Insert ("in");
-   Reserved.Insert ("is");
-   Reserved.Insert ("limited");
-   Reserved.Insert ("loop");
-   Reserved.Insert ("mod");
-   Reserved.Insert ("new");
-   Reserved.Insert ("not");
-   Reserved.Insert ("null");
-   Reserved.Insert ("of");
-   Reserved.Insert ("or");
-   Reserved.Insert ("others");
-   Reserved.Insert ("out");
-   Reserved.Insert ("package");
-   Reserved.Insert ("pragma");
-   Reserved.Insert ("private");
-   Reserved.Insert ("procedure");
-   Reserved.Insert ("protected");
-   Reserved.Insert ("raise");
-   Reserved.Insert ("range");
-   Reserved.Insert ("record");
-   Reserved.Insert ("rem");
-   Reserved.Insert ("renames");
-   Reserved.Insert ("requeue");
-   Reserved.Insert ("return");
-   Reserved.Insert ("reverse");
-   Reserved.Insert ("select");
-   Reserved.Insert ("separate");
-   Reserved.Insert ("subtype");
-   Reserved.Insert ("tagged");
-   Reserved.Insert ("task");
-   Reserved.Insert ("terminate");
-   Reserved.Insert ("then");
-   Reserved.Insert ("type");
-   Reserved.Insert ("until");
-   Reserved.Insert ("use");
-   Reserved.Insert ("when");
-   Reserved.Insert ("while");
-   Reserved.Insert ("with");
-   Reserved.Insert ("xor");
+   --  --  Save the reserved words (of Ada 95).
+   --  Reserved.Insert ("abort");
+   --  Reserved.Insert ("abs");
+   --  Reserved.Insert ("abstract");
+   --  Reserved.Insert ("accept");
+   --  Reserved.Insert ("access");
+   --  Reserved.Insert ("aliased");
+   --  Reserved.Insert ("all");
+   --  Reserved.Insert ("and");
+   --  Reserved.Insert ("array");
+   --  Reserved.Insert ("at");
+   --  Reserved.Insert ("begin");
+   --  Reserved.Insert ("body");
+   --  Reserved.Insert ("case");
+   --  Reserved.Insert ("constant");
+   --  Reserved.Insert ("declare");
+   --  Reserved.Insert ("delay");
+   --  Reserved.Insert ("delta");
+   --  Reserved.Insert ("digits");
+   --  Reserved.Insert ("do");
+   --  Reserved.Insert ("else");
+   --  Reserved.Insert ("elsif");
+   --  Reserved.Insert ("end");
+   --  Reserved.Insert ("entry");
+   --  Reserved.Insert ("exception");
+   --  Reserved.Insert ("exit");
+   --  Reserved.Insert ("for");
+   --  Reserved.Insert ("function");
+   --  Reserved.Insert ("generic");
+   --  Reserved.Insert ("goto");
+   --  Reserved.Insert ("if");
+   --  Reserved.Insert ("in");
+   --  Reserved.Insert ("is");
+   --  Reserved.Insert ("limited");
+   --  Reserved.Insert ("loop");
+   --  Reserved.Insert ("mod");
+   --  Reserved.Insert ("new");
+   --  Reserved.Insert ("not");
+   --  Reserved.Insert ("null");
+   --  Reserved.Insert ("of");
+   --  Reserved.Insert ("or");
+   --  Reserved.Insert ("others");
+   --  Reserved.Insert ("out");
+   --  Reserved.Insert ("package");
+   --  Reserved.Insert ("pragma");
+   --  Reserved.Insert ("private");
+   --  Reserved.Insert ("procedure");
+   --  Reserved.Insert ("protected");
+   --  Reserved.Insert ("raise");
+   --  Reserved.Insert ("range");
+   --  Reserved.Insert ("record");
+   --  Reserved.Insert ("rem");
+   --  Reserved.Insert ("renames");
+   --  Reserved.Insert ("requeue");
+   --  Reserved.Insert ("return");
+   --  Reserved.Insert ("reverse");
+   --  Reserved.Insert ("select");
+   --  Reserved.Insert ("separate");
+   --  Reserved.Insert ("subtype");
+   --  Reserved.Insert ("tagged");
+   --  Reserved.Insert ("task");
+   --  Reserved.Insert ("terminate");
+   --  Reserved.Insert ("then");
+   --  Reserved.Insert ("type");
+   --  Reserved.Insert ("until");
+   --  Reserved.Insert ("use");
+   --  Reserved.Insert ("when");
+   --  Reserved.Insert ("while");
+   --  Reserved.Insert ("with");
+   --  Reserved.Insert ("xor");
 
-   --  Include the reserved words new in Ada 2005.
-   Reserved.Insert ("interface");
-   Reserved.Insert ("overriding");
-   Reserved.Insert ("synchronized");
+   --  --  Include the reserved words new in Ada 2005.
+   --  Reserved.Insert ("interface");
+   --  Reserved.Insert ("overriding");
+   --  Reserved.Insert ("synchronized");
 
-   --  Include the reserved words new in Ada 2012.
-   Reserved.Insert ("some");
+   --  --  Include the reserved words new in Ada 2012.
+   --  Reserved.Insert ("some");
 
-   --  Include the reserved words new in Ada 2022.
-   Reserved.Insert ("parallel");
+   --  --  Include the reserved words new in Ada 2022.
+   --  Reserved.Insert ("parallel");
+   null;
 
 end Ada_Caser.Dictionaries;
