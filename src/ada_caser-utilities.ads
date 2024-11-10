@@ -18,4 +18,8 @@ private package Ada_Caser.Utilities is
 
    function Find_Spans (S : String; Splitting_At : Character) return Spans;
 
+   function Find_Spans
+     (S : Wide_Wide_String; Splitting_At : Wide_Wide_Character)
+      return Spans;
+
 end Ada_Caser.Utilities;

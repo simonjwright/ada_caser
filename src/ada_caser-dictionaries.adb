@@ -1,58 +1,71 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Vectors;
-with Ada.Strings.Fixed;
-with Ada.Strings.Maps.Constants;
-with Ada.Strings.Unbounded;
+with Ada.Characters.Wide_Wide_Latin_9;
+with Ada.Strings.Wide_Wide_Fixed;
+with Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
+with Ada.Strings.Wide_Wide_Unbounded;
 with Ada.Text_IO;
+with Ada.Wide_Wide_Text_IO;
 with Ada_Caser.Messages;
 with Ada_Caser.Utilities;
 
 package body Ada_Caser.Dictionaries is
 
-   function Casing_Equals (L, R : String) return Boolean;
-   function Casing_Less_Than (L, R : String) return Boolean;
+   function Casing_Equals (L, R : Wide_Wide_String) return Boolean;
+   function Casing_Less_Than (L, R : Wide_Wide_String) return Boolean;
 
-   package Lowercase_String_Maps is new
+   package Lowercase_Wide_Wide_String_Maps is new
      Ada.Containers.Indefinite_Ordered_Maps
-       (Key_Type     => String,
-        Element_Type => String,
+       (Key_Type     => Wide_Wide_String,
+        Element_Type => Wide_Wide_String,
         "<"          => Casing_Less_Than,
         "="          => Casing_Equals);
 
    --  For Case_Exceptions, the whole identifier has to match
-   Case_Exceptions     : Lowercase_String_Maps.Map;
+   Case_Exceptions     : Lowercase_Wide_Wide_String_Maps.Map;
    --  For Sub_Case_Exceptions, each 'word' in the identifier matches
    --  separately.
-   Sub_Case_Exceptions : Lowercase_String_Maps.Map;
+   Sub_Case_Exceptions : Lowercase_Wide_Wide_String_Maps.Map;
 
-   package Lowercase_String_Sets is new
+   package Lowercase_Wide_Wide_String_Sets is new
      Ada.Containers.Indefinite_Ordered_Sets
-       (Element_Type => String,
+       (Element_Type => Wide_Wide_String,
         "<"          => Casing_Less_Than,
         "="          => Casing_Equals);
 
-   Reserved : Lowercase_String_Sets.Set;
+   Reserved : Lowercase_Wide_Wide_String_Sets.Set;
 
-   function Casing_Equals (L, R : String) return Boolean is
-      use Ada.Strings.Fixed;
-      use Ada.Strings.Maps.Constants;
+   function Casing_Equals (L, R : Wide_Wide_String) return Boolean is
+      use Ada.Strings.Wide_Wide_Fixed;
+      use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
    begin
       return Translate (L, Lower_Case_Map) = Translate (R, Lower_Case_Map);
    end Casing_Equals;
 
-   function Casing_Less_Than (L, R : String) return Boolean is
-      use Ada.Strings.Fixed;
-      use Ada.Strings.Maps.Constants;
+   function Casing_Less_Than (L, R : Wide_Wide_String) return Boolean is
+      use Ada.Strings.Wide_Wide_Fixed;
+      use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
    begin
       return Translate (L, Lower_Case_Map) < Translate (R, Lower_Case_Map);
    end Casing_Less_Than;
 
-   procedure Add_Exception (From_Line : String);
+   function To_String (S : Wide_Wide_String) return String;
+
+   function To_String (S : Wide_Wide_String) return String is
+   begin
+      return Result : String (S'Range) do
+         for J in S'Range loop
+            Result (J) := Character'Val (Wide_Wide_Character'Pos (S (J)));
+         end loop;
+      end return;
+   end To_String;
+
+   procedure Add_Exception (From_Line : Wide_Wide_String);
 
    procedure Add_Dictionary (From_File : String) is
-      Exceptions : Ada.Text_IO.File_Type;
-      use Ada.Text_IO;
+      Exceptions : Ada.Wide_Wide_Text_IO.File_Type;
+      use Ada.Wide_Wide_Text_IO;
    begin
       Messages.Info ("Reading case exceptions from '" & From_File & "'");
 
@@ -71,19 +84,21 @@ package body Ada_Caser.Dictionaries is
          raise Notified_Error;
    end Add_Dictionary;
 
-   procedure Add_Exception (From_Line : String) is
+   procedure Add_Exception (From_Line : Wide_Wide_String) is
       use Ada.Strings;
-      use Ada.Strings.Fixed;
-      use Ada.Strings.Maps;
+      use Ada.Strings.Wide_Wide_Fixed;
+      use Ada.Strings.Wide_Wide_Maps;
 
       --  We only want the first word on the line.
-      L     : constant String := Trim (From_Line, Both);
-      --  Find_Spans splits on Character, so translate any tabs to
-      --  spaces before splitting.
+      L     : constant Wide_Wide_String := Trim (From_Line, Both);
+      --  Find_Spans splits on [Wide_Wide_]Character, so translate any
+      --  tabs to spaces before splitting.
       Words : constant Utilities.Spans :=
         Utilities.Find_Spans
-          (Translate (L, To_Mapping ((1 => ASCII.HT), " ")),
-           Splitting_At => ' ');
+          (Translate
+             (L,
+              To_Mapping ((1 => Ada.Characters.Wide_Wide_Latin_9.HT), " ")),
+           Splitting_At => Ada.Characters.Wide_Wide_Latin_9.Space);
 
    begin
       if Words'Length > 0 then
@@ -92,11 +107,14 @@ package body Ada_Caser.Dictionaries is
             if L (Words (1).L) = '*' then
                --  It's a sub-case exception.
                declare
-                  Word : constant String := L (Words (1).L + 1 .. Words (1).U);
+                  Word : constant Wide_Wide_String :=
+                    L (Words (1).L + 1 .. Words (1).U);
                begin
                   if Sub_Case_Exceptions.Contains (Word) then
                      Messages.Error
-                       ("Sub-case exception already found for '" & Word & "'");
+                       ("Sub-case exception already found for '" &
+                        To_String (Word) &
+                        "'");
                   else
                      Sub_Case_Exceptions.Insert (Word, Word);
                   end if;
@@ -104,11 +122,14 @@ package body Ada_Caser.Dictionaries is
             else
                --  It's a whole word exception.
                declare
-                  Word : constant String := L (Words (1).L .. Words (1).U);
+                  Word : constant Wide_Wide_String :=
+                    L (Words (1).L .. Words (1).U);
                begin
                   if Case_Exceptions.Contains (Word) then
                      Messages.Error
-                       ("Case exception already found for '" & Word & "'");
+                       ("Case exception already found for '" &
+                        To_String (Word) &
+                        "'");
                   else
                      Case_Exceptions.Insert (Word, Word);
                   end if;
@@ -118,37 +139,40 @@ package body Ada_Caser.Dictionaries is
       end if;
    end Add_Exception;
 
-   function Normalize (Id : String) return String is
+   function Normalize (Id : Wide_Wide_String) return Wide_Wide_String is
       use Ada.Strings;
-      use Ada.Strings.Fixed;
-      use Ada.Strings.Maps;
-      use Ada.Strings.Maps.Constants;
-      use Ada.Strings.Unbounded;
+      use Ada.Strings.Wide_Wide_Fixed;
+      use Ada.Strings.Wide_Wide_Maps;
+      use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
+      use Ada.Strings.Wide_Wide_Unbounded;
 
-      package String_Vectors is new
+      package Wide_Wide_String_Vectors is new
         Ada.Containers.Vectors
           (Index_Type   => Positive,
-           Element_Type => Unbounded_String);
+           Element_Type => Unbounded_Wide_Wide_String);
 
-      function "+" (R : String) return Unbounded_String
-      renames To_Unbounded_String;
-      function "+" (R : Unbounded_String) return String renames To_String;
+      function "+" (R : Wide_Wide_String) return Unbounded_Wide_Wide_String
+      renames To_Unbounded_Wide_Wide_String;
+      function "+" (R : Unbounded_Wide_Wide_String) return Wide_Wide_String
+      renames To_Wide_Wide_String;
 
       --  A Component consists of lower-case space-separated Words,
       --  each of which is subjected to Sub_Case_Exceptions (such as
       --  "IO" in "Text_IO", or, if no exception is found, the first
       --  character is capitalized.
-      procedure Process_Component (S : in out Unbounded_String);
-      procedure Process_Word (S : in out Unbounded_String);
+      procedure Process_Component (S : in out Unbounded_Wide_Wide_String);
+      procedure Process_Word (S : in out Unbounded_Wide_Wide_String);
 
-      procedure Process_Component (S : in out Unbounded_String) is
-         Str   : constant String := +S;
-         Words : String_Vectors.Vector;
+      procedure Process_Component (S : in out Unbounded_Wide_Wide_String) is
+         Str   : constant Wide_Wide_String := +S;
+         Words : Wide_Wide_String_Vectors.Vector;
       begin
          --  Check for reserved words, which don't contain underscores
          --  (spaces by now) and must therefore be whole components.
          if Reserved.Contains (Str) then
-            raise Invalid_Name with "reserved word '" & Str & "' not allowed";
+            Messages.Error
+              ("reserved word '" & To_String (Str) & "' not allowed");
+            raise Notified_Error;
          end if;
 
          --  Split into words.
@@ -181,7 +205,7 @@ package body Ada_Caser.Dictionaries is
          end if;
       end Process_Component;
 
-      procedure Process_Word (S : in out Unbounded_String) is
+      procedure Process_Word (S : in out Unbounded_Wide_Wide_String) is
       begin
          if Sub_Case_Exceptions.Contains (+S) then
             S := +Sub_Case_Exceptions.Element (+S);
@@ -196,9 +220,9 @@ package body Ada_Caser.Dictionaries is
       end Process_Word;
 
       --  The dot-separated components
-      Components : String_Vectors.Vector;
+      Components : Wide_Wide_String_Vectors.Vector;
 
-      Result : Unbounded_String;
+      Result : Unbounded_Wide_Wide_String;
    begin
       --  It's sometimes legal (e.g. in state transitions) for the
       --  identifier to be empty.
@@ -223,7 +247,8 @@ package body Ada_Caser.Dictionaries is
 
       --  Check that none of the components is empty.
       if (for some C of Components => Length (C) = 0) then
-         raise Invalid_Name with "empty component in """ & Id & """";
+         Messages.Error ("empty component in """ & To_String (Id) & """");
+         raise Notified_Error;
       end if;
 
       for C of Components loop
