@@ -1,3 +1,6 @@
+--  SPDX-License-Identifier: Apache-2.0
+--  SPDX-FileCopyrightText: Copyright (C) 2024 Simon Wright <simon@pushface.org>
+
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Vectors;
 with Ada.Characters.Wide_Wide_Latin_9;

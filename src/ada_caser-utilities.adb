@@ -1,3 +1,6 @@
+--  SPDX-License-Identifier: Apache-2.0
+--  SPDX-FileCopyrightText: Copyright (C) 2024 Simon Wright <simon@pushface.org>
+
 with Ada.Strings.Fixed;
 with Ada.Strings.Wide_Wide_Fixed;
 

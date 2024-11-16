@@ -5,11 +5,11 @@ version = "0.1.0-dev"
 authors = ["Simon Wright"]
 maintainers = ["Simon Wright <simon@pushface.org>"]
 maintainers-logins = ["simonjwright"]
-licenses = "BSD-3-Clause"
+licenses = "Apache-2.0"
 website = ""
 tags = ["ada", "source", "editor", "casing"]
 
 executables = ["ada_caser"]
 
 [[depends-on]]
-libadalang = "^25.0.1"
+libadalang = "^25.0.0"

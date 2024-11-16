@@ -1,3 +1,6 @@
+--  SPDX-License-Identifier: Apache-2.0
+--  SPDX-FileCopyrightText: Copyright (C) 2024 Simon Wright <simon@pushface.org>
+
 private package Ada_Caser.Dictionaries is
 
    Invalid_Name : exception;
