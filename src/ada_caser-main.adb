@@ -1,5 +1,5 @@
 --  SPDX-License-Identifier: Apache-2.0
---  SPDX-FileCopyrightText: Copyright (C) 2024 Simon Wright <simon@pushface.org>
+--  Copyright (C) 2024 Simon Wright <simon@pushface.org>
 
 with Ada_Caser.Dictionaries;
 with Ada_Caser.Messages;
