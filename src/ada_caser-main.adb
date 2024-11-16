@@ -7,11 +7,13 @@ with Libadalang.Analysis;
 
 procedure Ada_Caser.Main is
    use Libadalang;
-   Context : constant Analysis.Analysis_Context := Analysis.Create_Context;
+   Context : Analysis.Analysis_Context;
 begin
 
    Options.Process_Options
      (Report_Dictionaries_To => Dictionaries.Add_Dictionary'Access);
+
+   Context := Analysis.Create_Context (Charset => Options.Character_Set);
 
    Arguments :
    loop

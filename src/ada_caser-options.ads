@@ -5,6 +5,8 @@ private package Ada_Caser.Options is
 
    procedure Process_Options (Report_Dictionaries_To : Dictionary_Reporter);
 
+   function Character_Set return String;
+
    function Is_Verbose return Boolean;
 
 end Ada_Caser.Options;
