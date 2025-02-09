@@ -15,6 +15,8 @@ package body Ada_Caser.Options is
 
    Verbose : aliased Boolean := False;
 
+   Tokens : aliased Boolean := False;
+
    Charset : Ada.Strings.Unbounded.Unbounded_String
      := Ada.Strings.Unbounded.To_Unbounded_String ("utf-8");
 
@@ -22,6 +24,8 @@ package body Ada_Caser.Options is
      (Ada.Strings.Unbounded.To_String (Charset));
 
    function Is_Verbose return Boolean is (Verbose);
+
+   function Report_Tokens return Boolean is (Tokens);
 
    procedure Process_Options
      (Report_Dictionaries_To : Dictionary_Reporter)
@@ -67,6 +71,12 @@ package body Ada_Caser.Options is
          Switch      => "-D=",
          Long_Switch => "--dictionary=",
          Help        => "Add casing dictionary");
+      GNAT.Command_Line.Define_Switch
+        (Command_Line_Config,
+         Tokens'Access,
+         "-t",
+         Long_Switch => "--tokens",
+         Help        => "Report tokens in source file");
 
       GNAT.Command_Line.Getopt (Command_Line_Config);
 

@@ -12,4 +12,6 @@ private package Ada_Caser.Options is
 
    function Is_Verbose return Boolean;
 
+   function Report_Tokens return Boolean;
+
 end Ada_Caser.Options;
