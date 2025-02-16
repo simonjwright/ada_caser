@@ -17,11 +17,11 @@ package body Ada_Caser.Dictionaries is
    function Casing_Less_Than (L, R : Wide_Wide_String) return Boolean;
 
    package Lowercase_Wide_Wide_String_Maps is new
-     Ada.Containers.Indefinite_Ordered_Maps
-       (Key_Type     => Wide_Wide_String,
-        Element_Type => Wide_Wide_String,
-        "<"          => Casing_Less_Than,
-        "="          => Casing_Equals);
+   Ada.Containers.Indefinite_Ordered_Maps
+     (Key_Type     => Wide_Wide_String,
+      Element_Type => Wide_Wide_String,
+      "<"          => Casing_Less_Than,
+      "="          => Casing_Equals);
 
    --  For Case_Exceptions, the whole identifier has to match
    Case_Exceptions     : Lowercase_Wide_Wide_String_Maps.Map;
@@ -83,31 +83,35 @@ package body Ada_Caser.Dictionaries is
       use Ada.Strings.Wide_Wide_Maps;
 
       --  We only want the first word on the line.
-      L     : constant Wide_Wide_String := Trim (From_Line, Both);
+      The_Line : constant Wide_Wide_String := Trim (From_Line, Both);
       --  Find_Spans splits on [Wide_Wide_]Character, so translate any
       --  tabs to spaces before splitting.
-      Words : constant Utilities.Spans :=
+      Spans    : constant Utilities.Spans  :=
         Utilities.Find_Spans
           (Translate
-             (L,
+             (The_Line,
               To_Mapping ((1 => Ada.Characters.Wide_Wide_Latin_9.HT), " ")),
            Splitting_At => Ada.Characters.Wide_Wide_Latin_9.Space);
 
    begin
-      if Words'Length > 0 then
-         if L (Words (1).L) /= '#' then
+      if Spans'Length > 0 then
+         if The_Line (Spans (1).L) /= '#' then
             --  Not a comment.
-            if L (Words (1).L) = '*' then
+            if The_Line (Spans (1).L) = '*' then
                --  It's a sub-case exception.
                declare
                   Word : constant Wide_Wide_String :=
-                    L (Words (1).L + 1 .. Words (1).U);
+                    The_Line (Spans (1).L + 1 .. Spans (1).U);
                begin
-                  if Sub_Case_Exceptions.Contains (Word) then
+                  if Sub_Case_Exceptions.Contains (Word)
+                    and then Sub_Case_Exceptions.Element (Word) /= Word
+                  then
                      Messages.Error
-                       ("Sub-case exception already found for '" &
-                        To_String (Word) &
-                        "'");
+                       ("Sub-case exception ("
+                       & To_String (Sub_Case_Exceptions.Element (Word))
+                             & ") already found for '"
+                        & To_String (Word)
+                          & "'");
                   else
                      Sub_Case_Exceptions.Insert (Word, Word);
                   end if;
@@ -116,13 +120,17 @@ package body Ada_Caser.Dictionaries is
                --  It's a whole word exception.
                declare
                   Word : constant Wide_Wide_String :=
-                    L (Words (1).L .. Words (1).U);
+                    The_Line (Spans (1).L .. Spans (1).U);
                begin
-                  if Case_Exceptions.Contains (Word) then
+                  if Case_Exceptions.Contains (Word)
+                    and then Case_Exceptions.Element (Word) /= Word
+                  then
                      Messages.Error
-                       ("Case exception already found for '" &
-                        To_String (Word) &
-                        "'");
+                       ("Case exception ("
+                       & To_String (Case_Exceptions.Element (Word))
+                             & ") already found for '"
+                        & To_String (Word)
+                          & "'");
                   else
                      Case_Exceptions.Insert (Word, Word);
                   end if;
@@ -140,14 +148,14 @@ package body Ada_Caser.Dictionaries is
       use Ada.Strings.Wide_Wide_Unbounded;
 
       package Wide_Wide_String_Vectors is new
-        Ada.Containers.Vectors
-          (Index_Type   => Positive,
-           Element_Type => Unbounded_Wide_Wide_String);
+      Ada.Containers.Vectors
+        (Index_Type   => Positive,
+         Element_Type => Unbounded_Wide_Wide_String);
 
       function "+" (R : Wide_Wide_String) return Unbounded_Wide_Wide_String
-      renames To_Unbounded_Wide_Wide_String;
+         renames To_Unbounded_Wide_Wide_String;
       function "+" (R : Unbounded_Wide_Wide_String) return Wide_Wide_String
-      renames To_Wide_Wide_String;
+         renames To_Wide_Wide_String;
 
       --  A Component consists of lower-case space-separated Words,
       --  each of which is subjected to Sub_Case_Exceptions (such as
@@ -162,12 +170,13 @@ package body Ada_Caser.Dictionaries is
       begin
          --  Split into words.
          declare
-            Ws : constant Utilities.Spans := Utilities.Find_Spans (Str, ' ');
+            Spans : constant Utilities.Spans :=
+              Utilities.Find_Spans (Str, ' ');
          begin
-            for W in Ws'Range loop
+            for W in Spans'Range loop
                --  Merge runs of spaces
-               if Ws (W).U >= Ws (W).L then
-                  Words.Append (+(Str (Ws (W).L .. Ws (W).U)));
+               if Spans (W).U >= Spans (W).L then
+                  Words.Append (+(Str (Spans (W).L .. Spans (W).U)));
                end if;
             end loop;
          end;
@@ -219,14 +228,14 @@ package body Ada_Caser.Dictionaries is
       --  component, translate underscores into spaces, and trim the
       --  result.
       declare
-         Cs : constant Utilities.Spans := Utilities.Find_Spans (Id, '.');
+         Spans : constant Utilities.Spans := Utilities.Find_Spans (Id, '.');
       begin
-         for C in Cs'Range loop
+         for C in Spans'Range loop
             Components.Append
               (+(Trim
-                   (Translate
-                      (Id (Cs (C).L .. Cs (C).U), To_Mapping ("_", " ")),
-                    Both)));
+                  (Translate
+                     (Id (Spans (C).L .. Spans (C).U), To_Mapping ("_", " ")),
+                   Both)));
          end loop;
       end;
 
@@ -249,90 +258,5 @@ package body Ada_Caser.Dictionaries is
 
       return +Result;
    end Normalize;
-
-begin
-
-   --  --  Save the reserved words (of Ada 95).
-   --  Reserved.Insert ("abort");
-   --  Reserved.Insert ("abs");
-   --  Reserved.Insert ("abstract");
-   --  Reserved.Insert ("accept");
-   --  Reserved.Insert ("access");
-   --  Reserved.Insert ("aliased");
-   --  Reserved.Insert ("all");
-   --  Reserved.Insert ("and");
-   --  Reserved.Insert ("array");
-   --  Reserved.Insert ("at");
-   --  Reserved.Insert ("begin");
-   --  Reserved.Insert ("body");
-   --  Reserved.Insert ("case");
-   --  Reserved.Insert ("constant");
-   --  Reserved.Insert ("declare");
-   --  Reserved.Insert ("delay");
-   --  Reserved.Insert ("delta");
-   --  Reserved.Insert ("digits");
-   --  Reserved.Insert ("do");
-   --  Reserved.Insert ("else");
-   --  Reserved.Insert ("elsif");
-   --  Reserved.Insert ("end");
-   --  Reserved.Insert ("entry");
-   --  Reserved.Insert ("exception");
-   --  Reserved.Insert ("exit");
-   --  Reserved.Insert ("for");
-   --  Reserved.Insert ("function");
-   --  Reserved.Insert ("generic");
-   --  Reserved.Insert ("goto");
-   --  Reserved.Insert ("if");
-   --  Reserved.Insert ("in");
-   --  Reserved.Insert ("is");
-   --  Reserved.Insert ("limited");
-   --  Reserved.Insert ("loop");
-   --  Reserved.Insert ("mod");
-   --  Reserved.Insert ("new");
-   --  Reserved.Insert ("not");
-   --  Reserved.Insert ("null");
-   --  Reserved.Insert ("of");
-   --  Reserved.Insert ("or");
-   --  Reserved.Insert ("others");
-   --  Reserved.Insert ("out");
-   --  Reserved.Insert ("package");
-   --  Reserved.Insert ("pragma");
-   --  Reserved.Insert ("private");
-   --  Reserved.Insert ("procedure");
-   --  Reserved.Insert ("protected");
-   --  Reserved.Insert ("raise");
-   --  Reserved.Insert ("range");
-   --  Reserved.Insert ("record");
-   --  Reserved.Insert ("rem");
-   --  Reserved.Insert ("renames");
-   --  Reserved.Insert ("requeue");
-   --  Reserved.Insert ("return");
-   --  Reserved.Insert ("reverse");
-   --  Reserved.Insert ("select");
-   --  Reserved.Insert ("separate");
-   --  Reserved.Insert ("subtype");
-   --  Reserved.Insert ("tagged");
-   --  Reserved.Insert ("task");
-   --  Reserved.Insert ("terminate");
-   --  Reserved.Insert ("then");
-   --  Reserved.Insert ("type");
-   --  Reserved.Insert ("until");
-   --  Reserved.Insert ("use");
-   --  Reserved.Insert ("when");
-   --  Reserved.Insert ("while");
-   --  Reserved.Insert ("with");
-   --  Reserved.Insert ("xor");
-
-   --  --  Include the reserved words new in Ada 2005.
-   --  Reserved.Insert ("interface");
-   --  Reserved.Insert ("overriding");
-   --  Reserved.Insert ("synchronized");
-
-   --  --  Include the reserved words new in Ada 2012.
-   --  Reserved.Insert ("some");
-
-   --  --  Include the reserved words new in Ada 2022.
-   --  Reserved.Insert ("parallel");
-   null;
 
 end Ada_Caser.Dictionaries;

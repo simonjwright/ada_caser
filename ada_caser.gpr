@@ -23,12 +23,11 @@ project Ada_Caser is
       for Artifacts (".") use ("share");
    end Install;
 
-     package Pretty_Printer is
-        for Switches ("ada") use
-          (
-           "--source-line-breaks",
-           "--layout=minimal"
-          );
-     end Pretty_Printer;
+   package Pretty_Printer is
+      for Switches ("ada") use
+        (
+         "--source-line-breaks"
+        );
+   end Pretty_Printer;
 
 end Ada_Caser;
