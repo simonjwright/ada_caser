@@ -35,6 +35,17 @@ package body Ada_Caser.Processing is
                  Common.Ada_Integer |
                  Common.Ada_String =>
                   Put (Common.Text (Token));
+               when Common.Ada_Whitespace =>
+                  for Ch of Common.Text (Token) loop
+                     --  output an LF by calling New_Line, so
+                     --  [Wide_Wide_]Text_IO realises that the end of
+                     --  the file doesn't need an extra blank line.
+                     if Ch = Wide_Wide_Character'Val (16#0000_000a#) then
+                        New_Line;
+                     else
+                        Put (Ch);
+                     end if;
+                  end loop;
                when others =>
                   Put (Translate (Common.Text (Token), Lower_Case_Map));
             end case;
