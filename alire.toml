@@ -13,3 +13,4 @@ executables = ["ada_caser"]
 
 [[depends-on]]
 libadalang = "^25.0.0"
+langkit_support = "^25.0.0"
