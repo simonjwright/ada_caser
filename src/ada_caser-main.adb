@@ -35,6 +35,7 @@ begin
               Context.Get_From_File (Arg);
          begin
             if Unit.Has_Diagnostics then
+               Messages.Error ("in " & Unit.Get_Filename);
                Process_Diagnostics :
                declare
                   --  Once you get one skipped token, most of the
@@ -54,7 +55,7 @@ begin
                      begin
                         if Skipped_Token then
                            --  Only output the first "skipped token" message.
-                           if First_Skipped_Token then
+                              if First_Skipped_Token then
                               First_Skipped_Token := False;
                               Messages.Error (Message);
                            end if;
@@ -64,7 +65,6 @@ begin
                      end Process_One_Diagnostic;
                   end loop;
                end Process_Diagnostics;
-               Messages.Error ("quitting because of errors", Quit => True);
             else
                Processing.Process (Unit);
             end if;

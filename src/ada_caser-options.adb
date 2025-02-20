@@ -51,8 +51,8 @@ package body Ada_Caser.Options is
 
       GNAT.Command_Line.Set_Usage
         (Command_Line_Config,
-         Usage => "[switches] sourcefile",
-         Help  => "Adjust casing in the source file");
+         Usage => "[switches] files",
+         Help  => "Adjust casing in the source files");
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
          Verbose'Access,
@@ -71,6 +71,8 @@ package body Ada_Caser.Options is
          Switch      => "-D=",
          Long_Switch => "--dictionary=",
          Help        => "Add casing dictionary");
+
+      -- This is for diagnostic use only
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
          Tokens'Access,
