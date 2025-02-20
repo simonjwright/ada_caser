@@ -55,7 +55,8 @@ begin
                      begin
                         if Skipped_Token then
                            --  Only output the first "skipped token" message.
-                              if First_Skipped_Token then
+
+                           if First_Skipped_Token then
                               First_Skipped_Token := False;
                               Messages.Error (Message);
                            end if;
@@ -75,7 +76,7 @@ begin
 exception
    when GNAT.Command_Line.Exit_From_Command_Line =>
       null; -- This is only raised after -h/--help, so nothing to do
-   when others =>
+   when others                                   =>
       if Messages.Number_Of_Errors = 0 then
          --  If non-sero, we've already output an Error message and set
          --  exit status to Failure.
