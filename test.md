@@ -2,7 +2,7 @@
 
 `ada_caser` adjusts the casing of Ada source files to match the standard typified in the Ada Reference Manual.
 
-These tests expect to be run in a subdirectory of `ada_caser`, so that the executable is in `../bin`.
+These tests expect to be run in the root directory of `ada_caser`, so that the executable is in `bin/`.
 
 ## Feature 1: Simple usage
 
