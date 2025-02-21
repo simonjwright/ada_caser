@@ -43,17 +43,6 @@ package body Ada_Caser.Dictionaries is
       return Translate (L, Lower_Case_Map) < Translate (R, Lower_Case_Map);
    end Casing_Less_Than;
 
-   function To_String (S : Wide_Wide_String) return String;
-
-   function To_String (S : Wide_Wide_String) return String is
-   begin
-      return Result : String (S'Range) do
-         for J in S'Range loop
-            Result (J) := Character'Val (Wide_Wide_Character'Pos (S (J)));
-         end loop;
-      end return;
-   end To_String;
-
    procedure Add_Exception (From_Line : Wide_Wide_String);
 
    procedure Add_Dictionary (From_File : String) is
@@ -93,48 +82,75 @@ package body Ada_Caser.Dictionaries is
               To_Mapping ((1 => Ada.Characters.Wide_Wide_Latin_9.HT), " ")),
            Splitting_At => Ada.Characters.Wide_Wide_Latin_9.Space);
 
+      function Is_Caseable (Str : Wide_Wide_String) return Boolean
+      is
+         use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
+      begin
+         return (for all Ch of Str =>
+              Ch = '_' or else Is_In (Ch, Alphanumeric_Set));
+      --  for J in Str'Range loop
+      --     if not Is_In (str (j), Alphanumeric_Set)
+      --     then
+      --        return False;
+      --     end if;
+      --  end loop;
+      --  return True;
+      end Is_Caseable;
+
    begin
       if Spans'Length > 0 then
          if The_Line (Spans (1).L) /= '#' then
             --  Not a comment.
             if The_Line (Spans (1).L) = '*' then
-               --  It's a sub-case exception.
+               Sub_Case_Exception :
                declare
                   Word : constant Wide_Wide_String :=
                     The_Line (Spans (1).L + 1 .. Spans (1).U);
                begin
-                  if Sub_Case_Exceptions.Contains (Word)
-                    and then Sub_Case_Exceptions.Element (Word) /= Word
-                  then
-                     Messages.Error
-                       ("Sub-case exception ("
-                       & To_String (Sub_Case_Exceptions.Element (Word))
-                             & ") already found for '"
-                        & To_String (Word)
-                          & "'");
+                  if Sub_Case_Exceptions.Contains (Word) then
+                     if Sub_Case_Exceptions.Element (Word) /= Word then
+                        Messages.Error
+                          ("Sub-case exception (*"
+                          & Sub_Case_Exceptions.Element (Word)
+                             & ") already found for '*"
+                           & Word
+                           & "'");
+                     end if;
                   else
+                     Messages.Info ("added part case exception " & Word);
+                     if not Is_Caseable (Word) then
+                        Messages.Warning ("part case exception *"
+                          & Word
+                           & " contains uncaseable characters");
+                     end if;
                      Sub_Case_Exceptions.Insert (Word, Word);
                   end if;
-               end;
+               end Sub_Case_Exception;
             else
-               --  It's a whole word exception.
+               Whole_Word_Exception :
                declare
                   Word : constant Wide_Wide_String :=
                     The_Line (Spans (1).L .. Spans (1).U);
                begin
-                  if Case_Exceptions.Contains (Word)
-                    and then Case_Exceptions.Element (Word) /= Word
-                  then
-                     Messages.Error
-                       ("Case exception ("
-                       & To_String (Case_Exceptions.Element (Word))
+                  if Case_Exceptions.Contains (Word) then
+                     if Case_Exceptions.Element (Word) /= Word then
+                        Messages.Error
+                          ("Case exception ("
+                          & Case_Exceptions.Element (Word)
                              & ") already found for '"
-                        & To_String (Word)
-                          & "'");
+                           & Word
+                           & "'");
+                     end if;
                   else
+                     Messages.Info ("added full case exception " & Word);
+                     if not Is_Caseable (Word) then
+                        Messages.Warning ("full case exception "
+                          & Word
+                           & " contains uncaseable characters");
+                     end if;
                      Case_Exceptions.Insert (Word, Word);
                   end if;
-               end;
+               end Whole_Word_Exception;
             end if;
          end if;
       end if;
@@ -169,12 +185,14 @@ package body Ada_Caser.Dictionaries is
          Words : Wide_Wide_String_Vectors.Vector;
       begin
          --  Split into words.
+
          declare
             Spans : constant Utilities.Spans :=
               Utilities.Find_Spans (Str, ' ');
          begin
             for W in Spans'Range loop
                --  Merge runs of spaces
+
                if Spans (W).U >= Spans (W).L then
                   Words.Append (+(Str (Spans (W).L .. Spans (W).U)));
                end if;
@@ -220,6 +238,7 @@ package body Ada_Caser.Dictionaries is
    begin
       --  It's sometimes legal (e.g. in state transitions) for the
       --  identifier to be empty.
+
       if Id'Length = 0 then
          return "";
       end if;
@@ -241,7 +260,7 @@ package body Ada_Caser.Dictionaries is
 
       --  Check that none of the components is empty.
       if (for some C of Components => Length (C) = 0) then
-         Messages.Error ("empty component in """ & To_String (Id) & """");
+         Messages.Error ("empty component in """ & Id & """");
          raise Notified_Error;
       end if;
 

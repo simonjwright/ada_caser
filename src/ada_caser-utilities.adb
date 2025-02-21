@@ -32,6 +32,13 @@ package body Ada_Caser.Utilities is
         (1 .. Count (S, Wide_Wide_String'(1 => Splitting_At)) + 1);
       J      : Positive := 1;
    begin
+      if S'Length = 0 then
+         --  This can only happen when (mis)using the function to get
+         --  case exceptions; an identifier can never have length
+         --  zero.
+         return (1 .. 0 => <>);
+      end if;
+
       Result (J).L := S'First;
       for K in S'Range loop
          if S (K) = Splitting_At then
