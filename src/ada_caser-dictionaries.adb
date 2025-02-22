@@ -8,10 +8,14 @@ with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
 with Ada.Strings.Wide_Wide_Unbounded;
 with Ada.Wide_Wide_Text_IO;
+with VSS.Strings.Conversions;
+with VSS.Transformers.Casing;
 with Ada_Caser.Messages;
 with Ada_Caser.Utilities;
 
 package body Ada_Caser.Dictionaries is
+
+   function To_Lowercase (S : Wide_Wide_String) return Wide_Wide_String;
 
    function Casing_Equals (L, R : Wide_Wide_String) return Boolean;
    function Casing_Less_Than (L, R : Wide_Wide_String) return Boolean;
@@ -29,18 +33,28 @@ package body Ada_Caser.Dictionaries is
    --  separately.
    Sub_Case_Exceptions : Lowercase_Wide_Wide_String_Maps.Map;
 
-   function Casing_Equals (L, R : Wide_Wide_String) return Boolean is
-      use Ada.Strings.Wide_Wide_Fixed;
-      use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
+   function To_Lowercase (S : Wide_Wide_String) return Wide_Wide_String is
+      use VSS.Strings;
+      use VSS.Strings.Conversions;
+      use VSS.Transformers.Casing;
+      VS : constant Virtual_String := To_Virtual_String (S);
+      LVS : constant Virtual_String :=
+        Transform (Self => VSS.Transformers.Casing.To_Simple_Lowercase,
+                   Item => VS);
    begin
-      return Translate (L, Lower_Case_Map) = Translate (R, Lower_Case_Map);
+      return Result : Wide_Wide_String (S'Range) do
+         Set_Wide_Wide_String (LVS, Into => Result);
+      end return;
+   end To_Lowercase;
+
+   function Casing_Equals (L, R : Wide_Wide_String) return Boolean is
+   begin
+      return To_Lowercase (L) = To_Lowercase (R);
    end Casing_Equals;
 
    function Casing_Less_Than (L, R : Wide_Wide_String) return Boolean is
-      use Ada.Strings.Wide_Wide_Fixed;
-      use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
    begin
-      return Translate (L, Lower_Case_Map) < Translate (R, Lower_Case_Map);
+      return To_Lowercase (L) < To_Lowercase (R);
    end Casing_Less_Than;
 
    procedure Add_Exception (From_Line : Wide_Wide_String);
@@ -82,25 +96,11 @@ package body Ada_Caser.Dictionaries is
               To_Mapping ((1 => Ada.Characters.Wide_Wide_Latin_9.HT), " ")),
            Splitting_At => Ada.Characters.Wide_Wide_Latin_9.Space);
 
-      function Is_Caseable (Str : Wide_Wide_String) return Boolean
-      is
-         use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
-      begin
-         return (for all Ch of Str =>
-              Ch = '_' or else Is_In (Ch, Alphanumeric_Set));
-      --  for J in Str'Range loop
-      --     if not Is_In (str (j), Alphanumeric_Set)
-      --     then
-      --        return False;
-      --     end if;
-      --  end loop;
-      --  return True;
-      end Is_Caseable;
-
    begin
       if Spans'Length > 0 then
          if The_Line (Spans (1).L) /= '#' then
             --  Not a comment.
+
             if The_Line (Spans (1).L) = '*' then
                Sub_Case_Exception :
                declare
@@ -118,11 +118,6 @@ package body Ada_Caser.Dictionaries is
                      end if;
                   else
                      Messages.Info ("added part case exception " & Word);
-                     if not Is_Caseable (Word) then
-                        Messages.Warning ("part case exception *"
-                          & Word
-                           & " contains uncaseable characters");
-                     end if;
                      Sub_Case_Exceptions.Insert (Word, Word);
                   end if;
                end Sub_Case_Exception;
@@ -143,11 +138,6 @@ package body Ada_Caser.Dictionaries is
                      end if;
                   else
                      Messages.Info ("added full case exception " & Word);
-                     if not Is_Caseable (Word) then
-                        Messages.Warning ("full case exception "
-                          & Word
-                           & " contains uncaseable characters");
-                     end if;
                      Case_Exceptions.Insert (Word, Word);
                   end if;
                end Whole_Word_Exception;

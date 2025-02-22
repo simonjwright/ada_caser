@@ -195,16 +195,6 @@ Error: Sub-case exception (*STM) already found for '*sTM'
 
 ### Scenario 2.7: International characters are supported in casing exceptions
 
-Not all international characters! The characters supported in `Wide_Wide_Strings.Maps.Constants.Lower_Case_Maps`, for instance, are those supported in the 256-character space available to the `Strings` equivalent (Latin-1).
-
-`ada_caser` handles casing exceptions using a map whose key is the lowercase equivalent of the exception, and whose "<" and "=" operations compare the lowercased versions of their parameters, so if the "lowercased" version of the key isn't in fact lowercase things won't work as users might expect.
-
-This is why the identifier `àḆĈḒë` in this test has the three middle characters already capitalised - they're not in the mapped set.
-
-Unfortunately the German sharp s (ß) falls into the unmapped category. No doubt there are others. People might want it to convert to `SS`, which would cause problems to this program.
-
-There are (2025-02-21) 1858 uppercase and 2258 lowercase Unicode characters, according to [Wikipedia](https://en.wikipedia.org/wiki/Unicode_character_property) (Google's AI denies that the numbers differ if you ask it why).
-
 - Given the new file `international-exceptions.dict` containing 
 ```
 ÀḆĈḒË
@@ -212,13 +202,12 @@ There are (2025-02-21) 1858 uppercase and 2258 lowercase Unicode characters, acc
 - and the new file `international_identifier.ads` containing
 ```
 package international_identifier is
-   àḆĈḒë : constant := 42;
+   àḇĉḓë : constant := 42;
 end international_identifier;
 ```
 - when I run `bin/ada_caser --dictionary international-exceptions.dict international_identifier.ads`
 - then the output is
 ```
-Warning: full case exception ÀḆĈḒË contains uncaseable characters
 package International_Identifier is
    ÀḆĈḒË : constant := 42;
 end International_Identifier;
