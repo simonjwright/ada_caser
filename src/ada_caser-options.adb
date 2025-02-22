@@ -4,8 +4,11 @@
 with Ada.Strings.Unbounded;
 with Ada.Containers.Indefinite_Vectors;
 with GNAT.Command_Line;
+with Ada_Caser.Messages;
 
 package body Ada_Caser.Options is
+
+   use Libadalang.Common;
 
    package Dictionary_Vectors is new Ada.Containers.Indefinite_Vectors
      (Index_Type   => Positive,
@@ -20,8 +23,13 @@ package body Ada_Caser.Options is
    Charset : Ada.Strings.Unbounded.Unbounded_String
      := Ada.Strings.Unbounded.To_Unbounded_String ("utf-8");
 
+   The_Language : Language_Version := Ada_2022;
+
    function Character_Set return String is
      (Ada.Strings.Unbounded.To_String (Charset));
+
+   function Language return Language_Version is
+     (The_Language);
 
    function Is_Verbose return Boolean is (Verbose);
 
@@ -35,7 +43,20 @@ package body Ada_Caser.Options is
 
       procedure Charset_Callback (Unused : String; Value : String);
 
+      procedure Language_Version_Callback (Unused : String; Value : String);
+
       procedure Dictionary_Callback (Unused : String; Value : String);
+
+      procedure Language_Version_Callback (Unused : String; Value : String)
+      is
+         Result : Language_Version;
+      begin
+         Result := Language_Version'Value (Value);
+         The_Language := Result;
+      exception
+         when Constraint_Error =>
+            Messages.Error ("invalid language " & Value, Quit => True);
+      end Language_Version_Callback;
 
       procedure Charset_Callback (Unused : String; Value : String) is
       begin
@@ -67,12 +88,18 @@ package body Ada_Caser.Options is
          Help        => "Specify the character set (default ""utf-8"")");
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
+         Callback    => Language_Version_Callback'Unrestricted_Access,
+         Switch      => "-l=",
+         Long_Switch => "--language=",
+         Help        => "Specify the language version (default ""Ada_2022"")");
+      GNAT.Command_Line.Define_Switch
+        (Command_Line_Config,
          Callback    => Dictionary_Callback'Unrestricted_Access,
          Switch      => "-D=",
          Long_Switch => "--dictionary=",
          Help        => "Add casing dictionary");
 
-      -- This is for diagnostic use only
+      --  This is for diagnostic use only
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
          Tokens'Access,

@@ -29,7 +29,13 @@ package body Ada_Caser.Processing is
          if not Options.Report_Tokens then
             case Common.Kind (Common.Data (Token)) is
                when Common.Ada_Identifier =>
-                  Put (Dictionaries.Normalize (Common.Text (Token)));
+                  if Analysis.Is_Keyword (Token, Options.Language) then
+                     --  Keywords for language versions > 83 are
+                     --  parsed as indentifiers.
+                     Put (Translate (Common.Text (Token), Lower_Case_Map));
+                  else
+                     Put (Dictionaries.Normalize (Common.Text (Token)));
+                  end if;
                when Common.Ada_Char |
                  Common.Ada_Comment |
                  Common.Ada_Integer |
@@ -40,6 +46,7 @@ package body Ada_Caser.Processing is
                      --  output an LF by calling New_Line, so
                      --  [Wide_Wide_]Text_IO realises that the end of
                      --  the file doesn't need an extra blank line.
+
                      if Ch = Wide_Wide_Character'Val (16#0000_000a#) then
                         New_Line;
                      else

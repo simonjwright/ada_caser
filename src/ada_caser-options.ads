@@ -1,6 +1,8 @@
 --  SPDX-License-Identifier: Apache-2.0
 --  Copyright (C) 2024 Simon Wright <simon@pushface.org>
 
+with Libadalang.Common;
+
 private package Ada_Caser.Options is
 
    type Dictionary_Reporter
@@ -9,6 +11,8 @@ private package Ada_Caser.Options is
    procedure Process_Options (Report_Dictionaries_To : Dictionary_Reporter);
 
    function Character_Set return String;
+
+   function Language return Libadalang.Common.Language_Version;
 
    function Is_Verbose return Boolean;
 

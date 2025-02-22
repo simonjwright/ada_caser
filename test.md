@@ -212,3 +212,70 @@ package International_Identifier is
    ÀḆĈḒË : constant := 42;
 end International_Identifier;
 ```
+
+## Feature 3: Language version support
+
+Ada 95 reserves `abstract`, `aliased`, `protected`, `requeue`, `tagged`, `until`.
+Ada 2005 reserves `interface`, `overriding`, `synchronized`.
+Ada 2012 reserves `some`.
+Ada 2022 reserves `parallel`.
+
+Note that Libadalang won't process source incompatible with (at least) Ada 2012.
+Note also that Libadalang and GNAT don't recognise `parallel`.
+
+### Background
+
+- Given the new file `keywords.adb` containing
+```
+procedure Keywords is
+   function "=" (L, R : Boolean) return Boolean is ABSTRACT;
+   OVERRIDING 
+   function "=" (L, R : Integer) return Boolean is ABSTRACT;
+   Bools : array (0 .. 1) of Boolean := (others => False);
+   B : Boolean := (for SOME El of Boolean => El);
+begin
+   null;
+end Keywords;
+```
+
+### Scenario 3.1: Ada 83
+
+- When I run `bin/ada_caser --language=ada_83 keywords.adb`
+- then the output contains `ABSTRACT`
+- and then the output contains `OVERRIDING`
+- and then the output contains `SOME`
+
+### Scenario 3.2: Ada 95
+
+- When I run `bin/ada_caser --language=ada_95 keywords.adb`
+- then the output contains `abstract`
+- and then the output contains `OVERRIDING`
+- and then the output contains `SOME`
+
+### Scenario 3.3: Ada 2005
+
+- When I run `bin/ada_caser --language=ada_2005 keywords.adb`
+- then the output contains `abstract`
+- and then the output contains `overriding`
+- and then the output contains `SOME`
+
+### Scenario 3.4: Ada 2012
+
+- When I run `bin/ada_caser --language=ada_2012 keywords.adb`
+- then the output contains `abstract`
+- and then the output contains `overriding`
+- and then the output contains `some`
+
+### Scenario 3.5: Ada 2022
+
+- When I run `bin/ada_caser --language=ada_2022 keywords.adb`
+- then the output contains `abstract`
+- and then the output contains `overriding`
+- and then the output contains `some`
+
+### Scenario 3.6: Default language
+
+- When I run `bin/ada_caser keywords.adb`
+- then the output contains `abstract`
+- and then the output contains `overriding`
+- and then the output contains `some`
