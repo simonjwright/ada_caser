@@ -14,8 +14,10 @@ private package Ada_Caser.Options is
 
    function Language return Libadalang.Common.Language_Version;
 
-   function Is_Verbose return Boolean;
+   function Project return String;
 
-   function Report_Tokens return Boolean;
+   function Verbose return Boolean;
+
+   function Report_Diagnostics return Boolean;
 
 end Ada_Caser.Options;

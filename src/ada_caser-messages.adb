@@ -5,24 +5,47 @@ with Ada.Text_IO;
 with Ada.Wide_Wide_Text_IO;
 with Ada.Command_Line;
 with Ada_Caser.Options;
+with Ada.Calendar;
 
 package body Ada_Caser.Messages is
 
    Errors : Natural := 0;
 
+   Start_Time : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+
    procedure Info (Message : String) is
       use Ada.Text_IO;
+      package Duration_IO is new Fixed_IO (Duration);
+      use type Ada.Calendar.Time;
    begin
-      if Options.Is_Verbose then
-         Put_Line (Standard_Error, "Info: " & Message);
+      if Options.Verbose then
+         Put (Standard_Error, "Info: ");
+         Duration_IO.Put (Standard_Error,
+                          Ada.Calendar.Clock - Start_Time,
+                          Fore => 2,
+                          Aft  => 3,
+                          Exp  => 0);
+         Put (Standard_Error, ": ");
+         Put (Standard_Error, Message);
+         New_Line;
       end if;
    end Info;
 
    procedure Info (Message : Wide_Wide_String) is
       use Ada.Wide_Wide_Text_IO;
+      package Duration_IO is new Fixed_IO (Duration);
+      use type Ada.Calendar.Time;
    begin
-      if Options.Is_Verbose then
-         Put_Line (Standard_Error, "Info: " & Message);
+      if Options.Verbose then
+         Put (Standard_Error, "Info: ");
+         Duration_IO.Put (Standard_Error,
+                          Ada.Calendar.Clock - Start_Time,
+                          Fore => 2,
+                          Aft  => 3,
+                          Exp  => 0);
+         Put (Standard_Error, ": ");
+         Put (Standard_Error, Message);
+         New_Line;
       end if;
    end Info;
 

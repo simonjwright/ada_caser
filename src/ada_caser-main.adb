@@ -6,9 +6,15 @@ with Ada_Caser.Messages;
 with Ada_Caser.Options;
 with Ada_Caser.Processing;
 with GNAT.Command_Line;
+with GNATCOLL.Projects;
+with GNATCOLL.VFS;
 with Ada.Strings.Fixed;
 with Libadalang.Analysis;
+with Libadalang.Project_Provider;
 with Langkit_Support.Diagnostics;
+
+with Excep_Sym_Trace_Workaround; use Excep_Sym_Trace_Workaround;
+with Ada.Text_IO;
 
 procedure Ada_Caser.Main is
    use Libadalang;
@@ -18,7 +24,36 @@ begin
    Options.Process_Options
      (Report_Dictionaries_To => Dictionaries.Add_Dictionary'Access);
 
-   Context := Analysis.Create_Context (Charset => Options.Character_Set);
+   if Options.Project = "" then
+      Context := Analysis.Create_Context (Charset => Options.Character_Set);
+   else
+      Set_Up_Provider :
+      declare
+         Env : GNATCOLL.Projects.Project_Environment_Access;
+         Project  : constant GNATCOLL.Projects.Project_Tree_Access
+           := new GNATCOLL.Projects.Project_Tree;
+         Provider : Analysis.Unit_Provider_Reference;
+
+         function To_Virtual_File (Name : String)
+         return GNATCOLL.VFS.Virtual_File;
+         function To_Virtual_File (Name : String)
+            return GNATCOLL.VFS.Virtual_File
+         is
+            use GNATCOLL.VFS;
+         begin
+            return Create_From_Base (Filesystem_String (Name));
+         end To_Virtual_File;
+      begin
+         GNATCOLL.Projects.Initialize (Env);
+
+         Project.Load (To_Virtual_File (Options.Project), Env);
+
+         Provider := Project_Provider.Create_Project_Unit_Provider
+             (Tree => Project, Env => Env);
+
+         Context := Analysis.Create_Context (Unit_Provider => Provider);
+      end Set_Up_Provider;
+   end if;
 
    Arguments :
    loop
@@ -76,10 +111,12 @@ begin
 exception
    when GNAT.Command_Line.Exit_From_Command_Line =>
       null; -- This is only raised after -h/--help, so nothing to do
-   when others                                   =>
+   when Notified_Error                           =>
       if Messages.Number_Of_Errors = 0 then
          --  If non-sero, we've already output an Error message and set
          --  exit status to Failure.
          raise;
       end if;
+   when E : others                               =>
+      Ada.Text_IO.Put_Line (Symbolic_Traceback (E));
 end Ada_Caser.Main;

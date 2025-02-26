@@ -12,6 +12,13 @@ tags = ["ada", "source", "editor", "casing"]
 executables = ["ada_caser"]
 
 [[depends-on]]
+gnatcoll = "25.0.0"
 libadalang = "^25.0.0"
 langkit_support = "^25.0.0"
 vss = "^25.0.0"
+
+[[depends-on]]
+exsytrawo = "^1.1.0"
+
+[[pins]]
+exsytrawo = { path='../exsytrawo' }

@@ -16,24 +16,24 @@ package body Ada_Caser.Options is
 
    Dicts : Dictionary_Vectors.Vector;
 
-   Verbose : aliased Boolean := False;
-
-   Tokens : aliased Boolean := False;
-
    Charset : Ada.Strings.Unbounded.Unbounded_String
      := Ada.Strings.Unbounded.To_Unbounded_String ("utf-8");
-
-   The_Language : Language_Version := Ada_2022;
-
    function Character_Set return String is
      (Ada.Strings.Unbounded.To_String (Charset));
 
+   The_Language : Language_Version := Ada_2022;
    function Language return Language_Version is
      (The_Language);
 
-   function Is_Verbose return Boolean is (Verbose);
+   The_Project : Ada.Strings.Unbounded.Unbounded_String;
+   function Project return String is
+     (Ada.Strings.Unbounded.To_String (The_Project));
 
-   function Report_Tokens return Boolean is (Tokens);
+   Is_Verbose : aliased Boolean := False;
+   function Verbose return Boolean is (Is_Verbose);
+
+   Diagnostics : aliased Boolean := False;
+   function Report_Diagnostics return Boolean is (Diagnostics);
 
    procedure Process_Options
      (Report_Dictionaries_To : Dictionary_Reporter)
@@ -45,23 +45,30 @@ package body Ada_Caser.Options is
 
       procedure Language_Version_Callback (Unused : String; Value : String);
 
+      procedure Project_Callback (Unused : String; Value : String);
+
       procedure Dictionary_Callback (Unused : String; Value : String);
+
+      procedure Charset_Callback (Unused : String; Value : String) is
+      begin
+         Charset := Ada.Strings.Unbounded.To_Unbounded_String (Value);
+      end Charset_Callback;
 
       procedure Language_Version_Callback (Unused : String; Value : String)
       is
          Result : Language_Version;
       begin
-         Result := Language_Version'Value (Value);
+         Result       := Language_Version'Value (Value);
          The_Language := Result;
       exception
          when Constraint_Error =>
             Messages.Error ("invalid language " & Value, Quit => True);
       end Language_Version_Callback;
 
-      procedure Charset_Callback (Unused : String; Value : String) is
+      procedure Project_Callback (Unused : String; Value : String) is
       begin
-         Charset := Ada.Strings.Unbounded.To_Unbounded_String (Value);
-      end Charset_Callback;
+         The_Project := Ada.Strings.Unbounded.To_Unbounded_String (Value);
+      end Project_Callback;
 
       procedure Dictionary_Callback (Unused : String; Value : String) is
       begin
@@ -76,8 +83,8 @@ package body Ada_Caser.Options is
          Help  => "Adjust casing in the source files");
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
-         Verbose'Access,
-         "-v",
+         Output      => Is_Verbose'Access,
+         Switch      => "-v",
          Long_Switch => "--verbose",
          Help        => "Report progress");
       GNAT.Command_Line.Define_Switch
@@ -94,6 +101,12 @@ package body Ada_Caser.Options is
          Help        => "Specify the language version (default ""Ada_2022"")");
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
+         Callback    => Project_Callback'Unrestricted_Access,
+         Switch      => "-P=",
+         Long_Switch => "--project=",
+         Help        => "Specify the project (no default)");
+      GNAT.Command_Line.Define_Switch
+        (Command_Line_Config,
          Callback    => Dictionary_Callback'Unrestricted_Access,
          Switch      => "-D=",
          Long_Switch => "--dictionary=",
@@ -102,10 +115,9 @@ package body Ada_Caser.Options is
       --  This is for diagnostic use only
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
-         Tokens'Access,
-         "-t",
-         Long_Switch => "--tokens",
-         Help        => "Report tokens in source file");
+         Output      => Diagnostics'Access,
+         Long_Switch => "--diagnostics",
+         Help        => "Report diagnostics in source file");
 
       GNAT.Command_Line.Getopt (Command_Line_Config);
 
