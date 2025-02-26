@@ -106,6 +106,22 @@ package Internationals is
 end Internationals;
 ```
 
+### Scenario 1.6: Keyword vs Attribute
+
+- Given the new file `ranging.adb` containing
+```
+procedure Ranging is
+   type Index is range 0 .. 5;
+   type Arr is array (Index) of Boolean;
+begin
+   for J in Arr'Range loop
+      null;
+   end loop;
+end Ranging;
+```
+- when I run `bin/ada_caser ranging.adb`
+- then the output is unchanged from the file `ranging.adb`.
+
 ## Feature 2: Case exceptions
 
 ### Scenario 2.1: Whole words
@@ -213,7 +229,63 @@ package International_Identifier is
 end International_Identifier;
 ```
 
-## Feature 3: Language version support
+### Feature 3: Projects
+
+### Background
+
+- Given the new file `prj.gpr` containing
+```
+project Prj is
+end Prj;
+```
+
+### Scenario 3.1: Simple project, local lower-case identifier
+
+- Given the new file `user.adb` containing
+```
+with ada.text_io;
+with gnat.crc32;
+procedure user is
+begin
+   ada.text_io.put_line ("testing");
+end user;
+```
+- when I run `bin/ada_caser -P prj.gpr user.adb`
+- then the output contains
+```
+with Ada.Text_IO;
+with GNAT.CRC32;
+procedure User is
+begin
+   Ada.Text_IO.Put_Line ("testing");
+end user;
+```
+Note that in this case the end `user` isn't capitalised, because the as-declared identifier in `procedure user` wasn't.
+
+### Scenario 3.2: Simple project, local mixed-case identifier
+
+- Given the new file `user.adb` containing
+```
+with ada.text_io;
+with gnat.crc32;
+procedure UseR is
+begin
+   ada.text_io.put_line ("testing");
+end user;
+```
+- when I run `bin/ada_caser -P prj.gpr user.adb`
+- then the output contains
+```
+with Ada.Text_IO;
+with GNAT.CRC32;
+procedure UseR is
+begin
+   Ada.Text_IO.Put_Line ("testing");
+end UseR;
+```
+In this case the case of the end `UseR` is adjusted to match `procedure UseR`.
+
+## Feature 4: Language version support
 
 Ada 95 reserves `abstract`, `aliased`, `protected`, `requeue`, `tagged`, `until`.
 Ada 2005 reserves `interface`, `overriding`, `synchronized`.
@@ -238,44 +310,47 @@ begin
 end Keywords;
 ```
 
-### Scenario 3.1: Ada 83
+### Scenario 4.1: Ada 83
 
 - When I run `bin/ada_caser --language=ada_83 keywords.adb`
 - then the output contains `ABSTRACT`
 - and then the output contains `OVERRIDING`
 - and then the output contains `SOME`
 
-### Scenario 3.2: Ada 95
+### Scenario 4.2: Ada 95
 
 - When I run `bin/ada_caser --language=ada_95 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `OVERRIDING`
 - and then the output contains `SOME`
 
-### Scenario 3.3: Ada 2005
+### Scenario 4.3: Ada 2005
 
 - When I run `bin/ada_caser --language=ada_2005 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `SOME`
 
-### Scenario 3.4: Ada 2012
+### Scenario 4.4: Ada 2012
 
 - When I run `bin/ada_caser --language=ada_2012 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `some`
 
-### Scenario 3.5: Ada 2022
+### Scenario 4.5: Ada 2022
 
 - When I run `bin/ada_caser --language=ada_2022 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `some`
 
-### Scenario 3.6: Default language
+### Scenario 4.6: Default language
 
 - When I run `bin/ada_caser keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `some`
+
+```
+
