@@ -25,6 +25,9 @@ package body Ada_Caser.Options is
    function Language return Language_Version is
      (The_Language);
 
+   Pipe_Output : aliased Boolean := True;
+   function Pipe return Boolean is (Pipe_Output);
+
    The_Project : Ada.Strings.Unbounded.Unbounded_String;
    function Project return String is
      (Ada.Strings.Unbounded.To_String (The_Project));
@@ -99,6 +102,12 @@ package body Ada_Caser.Options is
          Switch      => "-l=",
          Long_Switch => "--language=",
          Help        => "Specify the language version (default ""Ada_2022"")");
+      GNAT.Command_Line.Define_Switch
+        (Command_Line_Config,
+         Output      => Pipe_Output'Access,
+         Switch      => "-p",
+         Long_Switch => "--pipe",
+         Help        => "Output to standard output");
       GNAT.Command_Line.Define_Switch
         (Command_Line_Config,
          Callback    => Project_Callback'Unrestricted_Access,

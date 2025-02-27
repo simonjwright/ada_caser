@@ -13,12 +13,8 @@ These tests expect to be run in the root directory of `ada_caser`, so that the e
 package Simple is
 end Simple;
 ```
-- When I run `bin/ada_caser simple.ads`
-- then the output is
-```
-package Simple is
-end Simple;
-```
+- When I run `bin/ada_caser --pipe simple.ads`
+- then the output is unchanged from the file `simple.ads`.
 
 ### Scenario 1.2: Keywords are lowcased, identifiers are title-cased
 
@@ -27,7 +23,7 @@ end Simple;
 Package keywords_identifiers Is
 END Keywords_Identifiers;
 ```
-- when I run `bin/ada_caser keywords_identifiers.ads`
+- when I run `bin/ada_caser --pipe keywords_identifiers.ads`
 - then the output is
 ```
 package Keywords_Identifiers is
@@ -53,7 +49,7 @@ package C_S_N Is
 
 end C_S_N;
 ```
-- when I run `bin/ada_caser c_s_n.ads`
+- when I run `bin/ada_caser --pipe c_s_n.ads`
 - then the output is
 ```
 package C_S_N is
@@ -75,7 +71,7 @@ end C_S_N;
 ### Scenario 1.4: Only the first character of an identifier is touched
 
 - Given the new file `first_char.ads` containing `package aBcD is end abCd;`
-- when I run `bin/ada_caser first_char.ads`
+- when I run `bin/ada_caser --pipe first_char.ads`
 - then the output is `package ABcD is end AbCd;`
 
 ### Scenario 1.5: International characters
@@ -92,7 +88,7 @@ package internationals is
       'ÿ');
 end internationals;
 ```
-- when I run `bin/ada_caser internationals.ads`
+- when I run `bin/ada_caser --pipe internationals.ads`
 - then the output is
 ```
 package Internationals is
@@ -119,7 +115,7 @@ begin
    end loop;
 end Ranging;
 ```
-- when I run `bin/ada_caser ranging.adb`
+- when I run `bin/ada_caser --pipe ranging.adb`
 - then the output is unchanged from the file `ranging.adb`.
 
 ## Feature 2: Case exceptions
@@ -133,7 +129,7 @@ end WHOLE_WORDS;
 ```
 
 - and given the new file `whole_words.dict` containing `Whole_WoRdS`
-- when I run `bin/ada_caser --dictionary whole_words.dict whole_words.ads`
+- when I run `bin/ada_caser --pipe --dictionary whole_words.dict whole_words.ads`
 - then the output is
 ```
 package Whole_WoRdS is
@@ -150,7 +146,7 @@ end PART.WORDS;
 ```
 
 - and given the new file `part_words.dict` containing `*WoRdS`
-- when I run `bin/ada_caser --dictionary part_words.dict part-words.ads`
+- when I run `bin/ada_caser --pipe --dictionary part_words.dict part-words.ads`
 - then the output is
 ```
 package Part.WoRdS is
@@ -166,7 +162,7 @@ end PART.WoRdS;
 
 ESP32
 ```
-- when I run `bin/ada_caser --dictionary=commented.dict`
+- when I run `bin/ada_caser --pipe --dictionary=commented.dict`
 - then there is no output
 
 ### Scenario 2.4: An exception can be indented
@@ -178,7 +174,7 @@ ESP32
    FOO
 ```
 - and given the new file `foo.ads` containing `procedure foo;`
-- when I run `bin/ada_caser -D indented.dict foo.ads`
+- when I run `bin/ada_caser --pipe -D indented.dict foo.ads`
 - then the output is `procedure FOO;`
 
 ### Scenario 2.5: Duplicate but identical exceptions are accepted
@@ -190,7 +186,7 @@ ESP32
 ESP32
 *SPI
 ```
-- when I run `bin/ada_caser --dictionary duplicates.dict`
+- when I run `bin/ada_caser --pipe --dictionary duplicates.dict`
 - then there is no output
 
 ### Scenario 2.6: Exceptions that are only different by case are rejected
@@ -202,7 +198,7 @@ ESP32
 ESp32
 *sTM
 ```
-- when I run `bin/ada_caser -D differing-in-case.dict`
+- when I run `bin/ada_caser --pipe -D differing-in-case.dict`
 - then the output is
 ```
 Error: Case exception (ESP32) already found for 'ESp32'
@@ -221,7 +217,7 @@ package international_identifier is
    àḇĉḓë : constant := 42;
 end international_identifier;
 ```
-- when I run `bin/ada_caser --dictionary international-exceptions.dict international_identifier.ads`
+- when I run `bin/ada_caser --pipe --dictionary international-exceptions.dict international_identifier.ads`
 - then the output is
 ```
 package International_Identifier is
@@ -250,7 +246,7 @@ begin
    ada.text_io.put_line ("testing");
 end user;
 ```
-- when I run `bin/ada_caser -P prj.gpr user.adb`
+- when I run `bin/ada_caser --pipe -P prj.gpr user.adb`
 - then the output contains
 ```
 with Ada.Text_IO;
@@ -273,7 +269,7 @@ begin
    ada.text_io.put_line ("testing");
 end user;
 ```
-- when I run `bin/ada_caser -P prj.gpr user.adb`
+- when I run `bin/ada_caser --pipe -P prj.gpr user.adb`
 - then the output contains
 ```
 with Ada.Text_IO;
@@ -283,7 +279,7 @@ begin
    Ada.Text_IO.Put_Line ("testing");
 end UseR;
 ```
-In this case the case of the end `UseR` is adjusted to match `procedure UseR`.
+Here, the case of the end `UseR` is adjusted to match `procedure UseR`.
 
 ## Feature 4: Language version support
 
@@ -312,45 +308,44 @@ end Keywords;
 
 ### Scenario 4.1: Ada 83
 
-- When I run `bin/ada_caser --language=ada_83 keywords.adb`
+- When I run `bin/ada_caser --pipe --language=ada_83 keywords.adb`
 - then the output contains `ABSTRACT`
 - and then the output contains `OVERRIDING`
 - and then the output contains `SOME`
 
 ### Scenario 4.2: Ada 95
 
-- When I run `bin/ada_caser --language=ada_95 keywords.adb`
+- When I run `bin/ada_caser --pipe --language=ada_95 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `OVERRIDING`
 - and then the output contains `SOME`
 
 ### Scenario 4.3: Ada 2005
 
-- When I run `bin/ada_caser --language=ada_2005 keywords.adb`
+- When I run `bin/ada_caser --pipe --language=ada_2005 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `SOME`
 
 ### Scenario 4.4: Ada 2012
 
-- When I run `bin/ada_caser --language=ada_2012 keywords.adb`
+- When I run `bin/ada_caser --pipe --language=ada_2012 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `some`
 
 ### Scenario 4.5: Ada 2022
 
-- When I run `bin/ada_caser --language=ada_2022 keywords.adb`
+- When I run `bin/ada_caser --pipe --language=ada_2022 keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `some`
 
 ### Scenario 4.6: Default language
 
-- When I run `bin/ada_caser keywords.adb`
+- When I run `bin/ada_caser --pipe keywords.adb`
 - then the output contains `abstract`
 - and then the output contains `overriding`
 - and then the output contains `some`
 
-```
 

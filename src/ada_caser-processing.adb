@@ -1,20 +1,23 @@
 --  SPDX-License-Identifier: Apache-2.0
 --  Copyright (C) 2024 Simon Wright <simon@pushface.org>
 
-with Ada.Strings;
-with Ada_Caser.Messages;
 with Ada_Caser.Dictionaries;
+with Ada_Caser.Messages;
 with Ada_Caser.Options;
-with Libadalang.Common;
+
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Directories;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
+with Libadalang.Common;
 
 with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
 package body Ada_Caser.Processing is
 
    procedure Process_Without_Project
-     (Unit : Libadalang.Analysis.Analysis_Unit) is
+     (Unit : Libadalang.Analysis.Analysis_Unit; File : File_Type)
+   is
       use Libadalang;
 
       Token : Common.Token_Reference := Analysis.First_Token (Unit);
@@ -33,15 +36,18 @@ package body Ada_Caser.Processing is
                   if Analysis.Is_Keyword (Token, Options.Language) then
                      --  Keywords for language versions > 83 are
                      --  parsed as indentifiers.
-                     Put (Translate (Common.Text (Token), Lower_Case_Map));
+                     Put (File,
+                        Translate (Common.Text (Token), Lower_Case_Map));
                   else
-                     Put (Dictionaries.Normalize (Common.Text (Token)));
+                     Put (File,
+                        Dictionaries.Normalize (Common.Text (Token)));
                   end if;
                when Common.Ada_Char |
                  Common.Ada_Comment |
                  Common.Ada_Integer |
                  Common.Ada_String =>
-                  Put (Common.Text (Token));
+                  Put (File,
+                    Common.Text (Token));
                when Common.Ada_Whitespace =>
                   for Ch of Common.Text (Token) loop
                      --  output an LF by calling New_Line, so
@@ -49,13 +55,14 @@ package body Ada_Caser.Processing is
                      --  the file doesn't need an extra blank line.
 
                      if Ch = Wide_Wide_Character'Val (16#0000_000a#) then
-                        New_Line;
+                        New_Line (File);
                      else
-                        Put (Ch);
+                        Put (File, Ch);
                      end if;
                   end loop;
                when others =>
-                  Put (Translate (Common.Text (Token), Lower_Case_Map));
+                  Put (File,
+                     Translate (Common.Text (Token), Lower_Case_Map));
             end case;
          else
             Put (Common.Text (Token));
@@ -69,7 +76,8 @@ package body Ada_Caser.Processing is
       Messages.Info (Unit.Get_Filename & " done.");
    end Process_Without_Project;
 
-   procedure Process_With_Project (Unit : Libadalang.Analysis.Analysis_Unit)
+   procedure Process_With_Project
+     (Unit : Libadalang.Analysis.Analysis_Unit; File : File_Type)
    is
       use Libadalang;
       use Libadalang.Analysis;
@@ -130,34 +138,39 @@ package body Ada_Caser.Processing is
                   if Analysis.Is_Keyword (Token, Options.Language) then
                      --  Keywords for language versions > 83 are
                      --  parsed as indentifiers.
-                     Put (Translate (Common.Text (Token), Lower_Case_Map));
+                     Put (File,
+                        Translate (Common.Text (Token), Lower_Case_Map));
                   elsif Xrefs (Positive (Index (Token)))
                             /= No_Defining_Name
                   then
                      Extract_Wanted_Part :
                      declare
-                        Source_Name : constant Wide_Wide_String :=
+                        Source_Name   : constant Wide_Wide_String :=
                           Common.Text (Token);
                         Defining_Name : constant Wide_Wide_String :=
                           Xrefs (Positive (Index (Token))).Text;
-                        Start_Index   : constant Positive :=
+                        Start_Index   : constant Positive         :=
                           Defining_Name'Last - Source_Name'Length + 1;
                      begin
-                        Put (Defining_Name
+                        Put (File,
+                             Defining_Name
                              (Start_Index .. Defining_Name'Last));
                      end Extract_Wanted_Part;
                   else
                      --  Do we want to normalize? would then require
                      --  (at least) two passes, because the recorded
                      --  (unnormalized) defining name from the first
-                     --  pass would be used for uses in that pass.
-                     Put (Dictionaries.Normalize (Common.Text (Token)));
+                     --  pass would be used for references in that
+                     --  pass.
+                     Put (File,
+                        Dictionaries.Normalize (Common.Text (Token)));
                   end if;
                when Common.Ada_Char |
                  Common.Ada_Comment |
                  Common.Ada_Integer |
                  Common.Ada_String =>
-                  Put (Common.Text (Token));
+                  Put (File,
+                    Common.Text (Token));
                when Common.Ada_Whitespace =>
                   for Ch of Common.Text (Token) loop
                      --  output an LF by calling New_Line, so
@@ -165,13 +178,14 @@ package body Ada_Caser.Processing is
                      --  the file doesn't need an extra blank line.
 
                      if Ch = Wide_Wide_Character'Val (16#0000_000a#) then
-                        New_Line;
+                        New_Line (File);
                      else
-                        Put (Ch);
+                        Put (File, Ch);
                      end if;
                   end loop;
                when others =>
-                  Put (Translate (Common.Text (Token), Lower_Case_Map));
+                  Put (File,
+                     Translate (Common.Text (Token), Lower_Case_Map));
             end case;
 
             Token := Common.Next (Token);
@@ -179,7 +193,7 @@ package body Ada_Caser.Processing is
       end Replace_Defined_Names;
 
    begin
-      Messages.Info ("Setting up for " & Unit.Get_Filename);
+      Messages.Info ("setting up for " & Unit.Get_Filename);
 
       --  Fill the Xref information
       Unit.Root.Traverse (Find_Defining_Names'Access);
@@ -191,11 +205,88 @@ package body Ada_Caser.Processing is
    end Process_With_Project;
 
    procedure Process (Unit : Libadalang.Analysis.Analysis_Unit) is
+      Result_File : File_Type;
    begin
+      Create (Result_File, Name => "", Mode => Out_File);
+
       if Options.Project = "" then
-         Process_Without_Project (Unit);
+         Process_Without_Project (Unit, Result_File);
       else
-         Process_With_Project (Unit);
+         Process_With_Project (Unit, Result_File);
+      end if;
+
+      Reset (Result_File, Mode => In_File);
+
+      if Options.Pipe then
+
+         begin
+            loop
+               declare
+                  Line : constant Wide_Wide_String := Get_Line (Result_File);
+               begin
+                  Put_Line (Line);
+               end;
+            end loop;
+         exception
+            when others =>
+               null;
+         end;
+
+      else
+         Compare_Files :
+         declare
+            package Strings is new Ada.Containers.Indefinite_Vectors
+              (Element_Type => Wide_Wide_String,
+               Index_Type   => Positive);
+
+            Input_File : constant String := Unit.Get_Filename;
+
+            Input_Text  : Strings.Vector;
+            Result_Text : Strings.Vector;
+
+            use type Strings.Vector;
+         begin
+
+            Read_The_Input :
+            declare
+               File : File_Type;
+            begin
+               Open (File, Name => Input_File, Mode => In_File);
+               loop
+                  Input_Text.Append (Get_Line (File));
+               end loop;
+            exception
+               when End_Error =>
+                  Close (File);
+            end Read_The_Input;
+
+            Read_The_Result :
+            begin
+               loop
+                  Result_Text.Append (Get_Line (Result_File));
+               end loop;
+            exception
+               when End_Error =>
+                  null;
+            end Read_The_Result;
+
+            if Result_Text = Input_Text then
+               Messages.Info (Input_File & " unchanged");
+            else
+               Messages.Info (Input_File & " changed");
+               declare
+                  use Ada.Directories;
+                  Backup : constant String := Input_File & "~";
+               begin
+                  if Exists (Backup) then
+                     Delete_File (Backup);
+                  end if;
+                  Rename (Input_File, Backup);
+                  Copy_File (Name (Result_File), Input_File);
+               end;
+            end if;
+         end Compare_Files;
+
       end if;
    end Process;
 
