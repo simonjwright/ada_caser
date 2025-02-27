@@ -145,16 +145,11 @@ package body Ada_Caser.Processing is
                   then
                      Extract_Wanted_Part :
                      declare
-                        Source_Name   : constant Wide_Wide_String :=
-                          Common.Text (Token);
                         Defining_Name : constant Wide_Wide_String :=
-                          Xrefs (Positive (Index (Token))).Text;
-                        Start_Index   : constant Positive         :=
-                          Defining_Name'Last - Source_Name'Length + 1;
+                          Xrefs (Positive (Index (Token)))
+                            .P_Relative_Name.Text;
                      begin
-                        Put (File,
-                             Defining_Name
-                             (Start_Index .. Defining_Name'Last));
+                        Put (File, Defining_Name);
                      end Extract_Wanted_Part;
                   else
                      --  Do we want to normalize? would then require
