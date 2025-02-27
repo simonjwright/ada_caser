@@ -13,13 +13,14 @@ with Libadalang.Analysis;
 with Libadalang.Project_Provider;
 with Langkit_Support.Diagnostics;
 
-with Excep_Sym_Trace_Workaround; use Excep_Sym_Trace_Workaround;
-with Ada.Text_IO;
-
 procedure Ada_Caser.Main is
    use Libadalang;
    Context : Analysis.Analysis_Context;
+
+   procedure Initialize_Exception_Handling is separate;
+
 begin
+   Initialize_Exception_Handling;
 
    Options.Process_Options
      (Report_Dictionaries_To => Dictionaries.Add_Dictionary'Access);
@@ -29,13 +30,13 @@ begin
    else
       Set_Up_Provider :
       declare
-         Env : GNATCOLL.Projects.Project_Environment_Access;
+         Env      : GNATCOLL.Projects.Project_Environment_Access;
          Project  : constant GNATCOLL.Projects.Project_Tree_Access
            := new GNATCOLL.Projects.Project_Tree;
          Provider : Analysis.Unit_Provider_Reference;
 
          function To_Virtual_File (Name : String)
-         return GNATCOLL.VFS.Virtual_File;
+            return GNATCOLL.VFS.Virtual_File;
          function To_Virtual_File (Name : String)
             return GNATCOLL.VFS.Virtual_File
          is
@@ -117,6 +118,10 @@ exception
          --  exit status to Failure.
          raise;
       end if;
-   when E : others                               =>
-      Ada.Text_IO.Put_Line (Symbolic_Traceback (E));
+   --  when E : others                               =>
+   --     Ada.Text_IO.Put_Line
+   --       (Ada.Exceptions.Exception_Name (E) &
+   --        " : " &
+   --        Ada.Exceptions.Exception_Message (E));
+   --     Ada.Text_IO.Put_Line (Symbolic_Traceback (E));
 end Ada_Caser.Main;
