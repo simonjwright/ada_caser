@@ -23,6 +23,7 @@ package body Ada_Caser.Processing is
       Token : Common.Token_Reference := Analysis.First_Token (Unit);
       use type Common.Token_Reference;
       use type Common.Token_Kind;
+      use type Common.Language_Version;
 
       use Ada.Strings.Wide_Wide_Fixed;
       use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
@@ -36,18 +37,30 @@ package body Ada_Caser.Processing is
                   if Analysis.Is_Keyword (Token, Options.Language) then
                      --  Keywords for language versions > 83 are
                      --  parsed as indentifiers.
-                     Put (File,
+                     Put
+                       (File,
+                        Translate (Common.Text (Token), Lower_Case_Map));
+                  elsif Options.Language > Common.Ada_83
+                    and then Translate (Common.Text (Token), Lower_Case_Map)
+                         = "aliased"
+                  then
+                     --  "aliased" isn't recognised as a keyword
+                     --  (libadalang #971).
+                     Put
+                       (File,
                         Translate (Common.Text (Token), Lower_Case_Map));
                   else
-                     Put (File,
+                     Put
+                       (File,
                         Dictionaries.Normalize (Common.Text (Token)));
                   end if;
                when Common.Ada_Char |
                  Common.Ada_Comment |
                  Common.Ada_Integer |
                  Common.Ada_String =>
-                  Put (File,
-                    Common.Text (Token));
+                  Put
+                    (File,
+                     Common.Text (Token));
                when Common.Ada_Whitespace =>
                   for Ch of Common.Text (Token) loop
                      --  output an LF by calling New_Line, so
@@ -61,7 +74,8 @@ package body Ada_Caser.Processing is
                      end if;
                   end loop;
                when others =>
-                  Put (File,
+                  Put
+                    (File,
                      Translate (Common.Text (Token), Lower_Case_Map));
             end case;
          else
@@ -135,10 +149,22 @@ package body Ada_Caser.Processing is
 
             case Common.Kind (Common.Data (Token)) is
                when Common.Ada_Identifier =>
-                  if Analysis.Is_Keyword (Token, Options.Language) then
+
+                  if Analysis.Is_Keyword (Token, Options.Language)
+                  then
                      --  Keywords for language versions > 83 are
                      --  parsed as indentifiers.
-                     Put (File,
+                     Put
+                       (File,
+                        Translate (Common.Text (Token), Lower_Case_Map));
+                  elsif Options.Language > Ada_83
+                    and then Translate (Common.Text (Token), Lower_Case_Map)
+                         = "aliased"
+                  then
+                     --  "aliased" isn't recognised as a keyword
+                     --  (libadalang #971).
+                     Put
+                       (File,
                         Translate (Common.Text (Token), Lower_Case_Map));
                   elsif Xrefs (Positive (Index (Token)))
                             /= No_Defining_Name
@@ -157,7 +183,8 @@ package body Ada_Caser.Processing is
                      --  (unnormalized) defining name from the first
                      --  pass would be used for references in that
                      --  pass.
-                     Put (File,
+                     Put
+                       (File,
                         Dictionaries.Normalize (Common.Text (Token)));
                   end if;
                when Common.Ada_Char |
