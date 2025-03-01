@@ -61,3 +61,15 @@ GNAT
 would render `gnat.command_line` as `GNAT.Command_Line`, `gnat_support` as `Gnat_Support`, and `ada.text_io` as `Ada.Text_IO`.
 
 It is an error to provide differing exceptions, for example `Id` and `*ID`.
+
+### Testing
+
+Testing is done using Black Box Testing (`bbt`), available via Alire. See the [test scenarios](test.md). 
+
+These scenarios demonstrate `ada_caser`'s features.
+
+Run using
+```
+bbt --exact_match --cleanup test.md
+```
+
