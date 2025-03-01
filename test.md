@@ -109,8 +109,11 @@ end Internationals;
 procedure Ranging is
    type Index is range 0 .. 5;
    type Arr is array (Index) of Boolean;
+   type Arr_P is access all Arr;
+   A : aliased Arr;
+   A_P : Arr_P := A'Access;
 begin
-   for J in Arr'Range loop
+   for J in A_P'Range loop
       null;
    end loop;
 end Ranging;
