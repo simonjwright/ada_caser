@@ -19,6 +19,7 @@ There are some exceptions to the normal rule: for example, `IO` in `Ada.Text_IO`
 | `-p`, `--pipe` | Send the output to standard output |
 | `-D`, `--dictionary=ARG` | Add a casing dictionary |
 | `-P`, `--project=ARG` | Use a GNAT Project (default none) |
+| `-V`, `--version` | Report the version |
 
 ### Processing with a GNAT Project
 

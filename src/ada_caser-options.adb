@@ -35,6 +35,9 @@ package body Ada_Caser.Options is
    Is_Verbose : aliased Boolean := False;
    function Verbose return Boolean is (Is_Verbose);
 
+   Version_Required : aliased Boolean := False;
+   function Version return Boolean is (Version_Required);
+
    Diagnostics : aliased Boolean := False;
    function Report_Diagnostics return Boolean is (Diagnostics);
 
@@ -120,6 +123,12 @@ package body Ada_Caser.Options is
          Switch      => "-D=",
          Long_Switch => "--dictionary=",
          Help        => "Add casing dictionary");
+      GNAT.Command_Line.Define_Switch
+        (Command_Line_Config,
+         Output      => Version_Required'Access,
+         Switch      => "-V",
+         Long_Switch => "--version",
+         Help        => "Report ada_caser's version");
 
       --  This is for diagnostic use only
       GNAT.Command_Line.Define_Switch

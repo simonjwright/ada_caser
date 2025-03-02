@@ -5,9 +5,12 @@ with Ada_Caser.Dictionaries;
 with Ada_Caser.Messages;
 with Ada_Caser.Options;
 with Ada_Caser.Processing;
+with Ada_Caser.Version;
 with GNAT.Command_Line;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
+with Ada.Command_Line;
+with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Libadalang.Analysis;
 with Libadalang.Project_Provider;
@@ -24,18 +27,24 @@ begin
    Options.Process_Options
      (Report_Dictionaries_To => Dictionaries.Add_Dictionary'Access);
 
+   if Options.Version then
+      Ada.Text_IO.Put_Line (Ada_Caser.Version);
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Success);
+      return;
+   end if;
+
    if Options.Project = "" then
       Context := Analysis.Create_Context (Charset => Options.Character_Set);
    else
       Set_Up_Provider :
       declare
-         Env : GNATCOLL.Projects.Project_Environment_Access;
+         Env      : GNATCOLL.Projects.Project_Environment_Access;
          Project  : constant GNATCOLL.Projects.Project_Tree_Access
            := new GNATCOLL.Projects.Project_Tree;
          Provider : Analysis.Unit_Provider_Reference;
 
          function To_Virtual_File (Name : String)
-         return GNATCOLL.VFS.Virtual_File;
+            return GNATCOLL.VFS.Virtual_File;
          function To_Virtual_File (Name : String)
             return GNATCOLL.VFS.Virtual_File
          is
@@ -46,7 +55,15 @@ begin
       begin
          GNATCOLL.Projects.Initialize (Env);
 
-         Project.Load (To_Virtual_File (Options.Project), Env);
+         begin
+            Project.Load (To_Virtual_File (Options.Project), Env);
+         exception
+            when GNATCOLL.Projects.Invalid_Project =>
+               Ada.Text_IO.Put_Line
+                 ("error: invalid project " & Options.Project);
+               Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+               return;
+         end;
 
          Provider := Project_Provider.Create_Project_Unit_Provider
              (Tree => Project, Env => Env);
@@ -109,14 +126,29 @@ begin
    end loop Arguments;
 
 exception
-   when GNAT.Command_Line.Exit_From_Command_Line =>
-      null; -- This is only raised after -h/--help, so nothing to do
-   when Notified_Error                           =>
+   when GNAT.Command_Line.Exit_From_Command_Line
+     | GNAT.Command_Line.Invalid_Switch =>
+      --  These are only raised after information already output,
+      --  so nothing to do
+      null;
+
+   when GNAT.Command_Line.Invalid_Parameter =>
+      Ada.Text_IO.Put_Line ("invalid command line switch parameter");
+
+   when Notified_Error =>
       if Messages.Number_Of_Errors = 0 then
          --  If non-sero, we've already output an Error message and set
          --  exit status to Failure.
          raise;
       end if;
-   when E : others                               =>
-      Ada.Text_IO.Put_Line (Symbolic_Traceback (E));
+
+   when E : others =>
+      declare
+         use Ada.Text_IO;
+         use Ada.Exceptions;
+      begin
+         Put_Line
+           ("raised " & Exception_Name (E) & " : " & Exception_Message (E));
+         Put_Line (Symbolic_Traceback (E));
+      end;
 end Ada_Caser.Main;

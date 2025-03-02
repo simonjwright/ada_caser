@@ -20,6 +20,10 @@ private package Ada_Caser.Options is
 
    function Verbose return Boolean;
 
+   --  Has the user requested version info? If so, get the version from
+   --  Ada_Caser.Version.
+   function Version return Boolean;
+
    function Report_Diagnostics return Boolean;
 
 end Ada_Caser.Options;
