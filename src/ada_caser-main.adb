@@ -10,14 +10,15 @@ with GNAT.Command_Line;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Ada.Command_Line;
-with Ada.Exceptions;
 with Ada.Strings.Fixed;
+with Ada.Text_IO;
 with Libadalang.Analysis;
 with Libadalang.Project_Provider;
 with Langkit_Support.Diagnostics;
 
-with Excep_Sym_Trace_Workaround; use Excep_Sym_Trace_Workaround;
-with Ada.Text_IO;
+--  Supports symbolic traceback on macOS.
+with Ada_Caser.Exception_Reporting;
+pragma Unreferenced (Ada_Caser.Exception_Reporting);
 
 procedure Ada_Caser.Main is
    use Libadalang;
@@ -141,14 +142,4 @@ exception
          --  exit status to Failure.
          raise;
       end if;
-
-   when E : others =>
-      declare
-         use Ada.Text_IO;
-         use Ada.Exceptions;
-      begin
-         Put_Line
-           ("raised " & Exception_Name (E) & " : " & Exception_Message (E));
-         Put_Line (Symbolic_Traceback (E));
-      end;
 end Ada_Caser.Main;

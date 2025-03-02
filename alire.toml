@@ -17,8 +17,6 @@ libadalang = "^25.0.0"
 langkit_support = "^25.0.0"
 vss = "^25.0.0"
 
-[[depends-on]]
-exsytrawo = "^1.1.0"
-
-[[pins]]
-exsytrawo = { path='../exsytrawo' }
+# exsytrawo decodes stack traces for macos.
+[depends-on.'case(os)'.macos]
+exsytrawo = "^1.2.0"

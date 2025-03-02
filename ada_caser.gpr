@@ -30,4 +30,15 @@ project Ada_Caser is
         );
    end Pretty_Printer;
 
+   package Naming is
+      case Ada_Caser_Config.Alire_Host_OS is
+         when "macos" =>
+            for Body ("Ada_Caser.Exception_Reporting")
+            use "ada_caser-exception_reporting--macos.adb";
+         when others =>
+            for Body ("Ada_Caser.Exception_Reporting")
+            use "ada_caser-exception_reporting--other.adb";
+      end case;
+   end Naming;
+
 end Ada_Caser;
