@@ -22,12 +22,20 @@ jobs:
           - windows-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: alire-project/setup-alire@v4
-      - if: {{ matrix.windows-latest }}
-        run: alr settings --set dependencies.shared false
-      - run: alr build -- -gnatwJ
-      - if: {{ ! matrix.windows-latest }}
-        run: bin/ada_caser --version
-      - if: {{ matrix.windows-latest }}
-        run: bin\ada_caser --version
+    - uses: actions/checkout@v2
+    - uses: alire-project/setup-alire@v4
+
+    - name: Private dependencies if Windows
+      if: {{ matrix.windows-latest }}
+      run: alr settings --set dependencies.shared false
+
+    - name: Build
+      run: alr build -- -gnatwJ
+
+    - name: Run (not Windows)
+      if: {{ ! matrix.windows-latest }}
+      run: bin/ada_caser --version
+
+    - name: Run (Windows)
+      if: {{ matrix.windows-latest }}
+      run: bin\ada_caser --version
