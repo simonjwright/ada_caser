@@ -24,6 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: alire-project/setup-alire@v4
-      - run: |
-          alr build -- -gnatwJ
-          bin/ada_caser --version
+      - if: {{ matrix.windows-latest }}
+        run: alr settings --set dependencies.shared false
+      - run: alr build -- -gnatwJ
+      - if: {{ ! matrix.windows-latest }}
+        run: bin/ada_caser --version
+      - if: {{ matrix.windows-latest }}
+        run: bin\ada_caser --version
