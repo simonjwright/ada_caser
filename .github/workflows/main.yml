@@ -26,16 +26,16 @@ jobs:
     - uses: alire-project/setup-alire@v4
 
     - name: Private dependencies if Windows
-      if: {{ matrix.windows-latest }}
+      if: startsWith(matrix.os, 'windows')
       run: alr settings --set dependencies.shared false
 
     - name: Build
       run: alr build -- -gnatwJ
 
     - name: Run (not Windows)
-      if: {{ ! matrix.windows-latest }}
+      if: " ! startsWith(matrix.os, 'windows') "
       run: bin/ada_caser --version
 
     - name: Run (Windows)
-      if: {{ matrix.windows-latest }}
+      if: startsWith(matrix.os, 'windows')
       run: bin\ada_caser --version
