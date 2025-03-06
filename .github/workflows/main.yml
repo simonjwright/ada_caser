@@ -30,7 +30,7 @@ jobs:
       run: alr settings --set dependencies.shared false
 
     - name: Build
-      run: alr build -- -gnatwJ
+      run: alr build
 
     - name: Run
       run: |
