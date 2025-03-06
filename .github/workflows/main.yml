@@ -1,0 +1,38 @@
+name: Ada_Caser
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false # Attempt to generate as many of them as possible
+      matrix:
+        os:
+          - macos-13
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: alire-project/setup-alire@v4
+
+    - name: Private dependencies if Windows (avoid long caches)
+      if: startsWith(matrix.os, 'windows')
+      run: alr settings --set dependencies.shared false
+
+    - name: Build
+      run: alr build -- -gnatwJ
+
+    - name: Run
+      run: |
+        bin/ada_caser --version
+        alr exec -- bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad? 2>&1
