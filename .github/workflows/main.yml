@@ -36,10 +36,10 @@ jobs:
       if: " ! startsWith(matrix.os, 'windows') "
       run: |
         bin/ada_caser --version
-        bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
+        alr exec -- bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
 
     - name: Run (Windows)
       if: startsWith(matrix.os, 'windows')
       run: |
         bin\ada_caser --version
-        bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
+        alr exec -- bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
