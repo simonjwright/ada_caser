@@ -25,21 +25,14 @@ jobs:
     - uses: actions/checkout@v2
     - uses: alire-project/setup-alire@v4
 
-    - name: Private dependencies if Windows
+    - name: Private dependencies if Windows (avoid long caches)
       if: startsWith(matrix.os, 'windows')
       run: alr settings --set dependencies.shared false
 
     - name: Build
       run: alr build -- -gnatwJ
 
-    - name: Run (not Windows)
-      if: " ! startsWith(matrix.os, 'windows') "
+    - name: Run
       run: |
         bin/ada_caser --version
-        alr exec -- bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
-
-    - name: Run (Windows)
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        bin\ada_caser --version
         alr exec -- bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
