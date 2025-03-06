@@ -16,7 +16,7 @@ end Simple;
 - When I run `bin/ada_caser --pipe simple.ads`
 - then the output is unchanged from the file `simple.ads`.
 
-### Scenario 1.2: Keywords are lowcased, identifiers are title-cased
+### Scenario 1.2: Keywords are lowcased, new identifiers are title-cased
 
 - Given the new file `keywords_identifiers.ads`
 ```
@@ -27,8 +27,18 @@ END Keywords_Identifiers;
 - then the output is
 ```
 package Keywords_Identifiers is
+end keywords_identifiers;
+```
+but
+
+- when I run `bin/ada_caser keywords_identifiers.ads`
+- and then I run `bin/ada_caser --pipe keywords_identifiers.ads`
+- then the output is
+```
+package Keywords_Identifiers is
 end Keywords_Identifiers;
 ```
+because on the first run the package name is new and is title-cased but the end name is cased to the original as-declared (lowcased) version, and the file is rewritten. On the second run the end name is cased to the now title-cased package name.
 
 ### Scenario 1.3: Characters, strings and numbers aren't touched
 
@@ -70,15 +80,15 @@ end C_S_N;
 
 ### Scenario 1.4: Only the first character of an identifier is touched
 
-- Given the new file `first_char.ads` containing `package aBcD is end abCd;`
+- Given the new file `first_char.ads` containing `procedure aBcD;`
 - when I run `bin/ada_caser --pipe first_char.ads`
-- then the output is `package ABcD is end AbCd;`
+- then the output is `procedure ABcD;`
 
 ### Scenario 1.5: International characters
 
 - Given the new file `internationals.ads` containing
 ```
-package internationals is
+package Internationals is
    type enum is
      (item,
       'a',
@@ -86,7 +96,7 @@ package internationals is
       ae_ææ_ae,
       '-',
       'ÿ');
-end internationals;
+end Internationals;
 ```
 - when I run `bin/ada_caser --pipe internationals.ads`
 - then the output is
@@ -130,9 +140,9 @@ end Ranging;
 package whole_words is
 end WHOLE_WORDS;
 ```
-
 - and given the new file `whole_words.dict` containing `Whole_WoRdS`
-- when I run `bin/ada_caser --pipe --dictionary whole_words.dict whole_words.ads`
+- when I run `bin/ada_caser --dictionary whole_words.dict whole_words.ads`
+- and then I run `bin/ada_caser --pipe --dictionary whole_words.dict whole_words.ads`
 - then the output is
 ```
 package Whole_WoRdS is
@@ -147,9 +157,9 @@ package part.words is
   SOME_words : integer;
 end PART.WORDS;
 ```
-
 - and given the new file `part_words.dict` containing `*WoRdS`
-- when I run `bin/ada_caser --pipe --dictionary part_words.dict part-words.ads`
+- when I run `bin/ada_caser --dictionary part_words.dict part-words.ads`
+- and then I run `bin/ada_caser --pipe --dictionary part_words.dict part-words.ads`
 - then the output is
 ```
 package Part.WoRdS is
@@ -216,9 +226,9 @@ Error: Sub-case exception (*STM) already found for '*sTM'
 ```
 - and the new file `international_identifier.ads` containing
 ```
-package international_identifier is
+package International_Identifier is
    àḇĉḓë : constant := 42;
-end international_identifier;
+end International_Identifier;
 ```
 - when I run `bin/ada_caser --pipe --dictionary international-exceptions.dict international_identifier.ads`
 - then the output is
@@ -230,15 +240,7 @@ end International_Identifier;
 
 ### Feature 3: Projects
 
-### Background
-
-- Given the new file `prj.gpr` containing
-```
-project Prj is
-end Prj;
-```
-
-### Scenario 3.1: Simple project, local lower-case identifier
+### Scenario 3.1: Local lower-cased library identifiers, no project
 
 - Given the new file `user.adb` containing
 ```
@@ -249,7 +251,7 @@ begin
    ada.text_io.put_line ("testing");
 end user;
 ```
-- when I run `bin/ada_caser --pipe -P prj.gpr user.adb`
+- when I run `bin/ada_caser --pipe user.adb`
 - then the output contains
 ```
 with Ada.Text_IO;
@@ -259,11 +261,12 @@ begin
    Ada.Text_IO.Put_Line ("testing");
 end user;
 ```
-Note that in this case the end `user` isn't capitalised, because the as-declared identifier in `procedure user` wasn't.
+Note that the end `user` isn't capitalised, because the as-declared identifier in `procedure user` wasn't.
 
-### Scenario 3.2: Simple project, local mixed-case identifier
+### Scenario 3.2: Local lower-cased library identifiers, simple project
 
-- Given the new file `user.adb` containing
+- Given the new file `prj.gpr` containing `project Prj is end Prj;`
+- and given the new file `user.adb` containing
 ```
 with ada.text_io;
 with gnat.crc32;
@@ -272,7 +275,7 @@ begin
    ada.text_io.put_line ("testing");
 end user;
 ```
-- when I run `bin/ada_caser --pipe -P prj.gpr user.adb`
+- when I run `bin/ada_caser --pipe user.adb`
 - then the output contains
 ```
 with Ada.Text_IO;
@@ -303,7 +306,7 @@ procedure Keywords is
    OVERRIDING 
    function "=" (L, R : Integer) return Boolean is ABSTRACT;
    Bools : array (0 .. 1) of Boolean := (others => False);
-   B : Boolean := (for SOME El of Boolean => El);
+   B : ALIASED Boolean := (for SOME El of Boolean => El);
 begin
    null;
 end Keywords;
@@ -313,6 +316,7 @@ end Keywords;
 
 - When I run `bin/ada_caser --pipe --language=ada_83 keywords.adb`
 - then the output contains `ABSTRACT`
+- and then the output contains `ALIASED`
 - and then the output contains `OVERRIDING`
 - and then the output contains `SOME`
 
@@ -320,6 +324,7 @@ end Keywords;
 
 - When I run `bin/ada_caser --pipe --language=ada_95 keywords.adb`
 - then the output contains `abstract`
+- and then the output contains `aliased`
 - and then the output contains `OVERRIDING`
 - and then the output contains `SOME`
 
@@ -327,6 +332,7 @@ end Keywords;
 
 - When I run `bin/ada_caser --pipe --language=ada_2005 keywords.adb`
 - then the output contains `abstract`
+- and then the output contains `aliased`
 - and then the output contains `overriding`
 - and then the output contains `SOME`
 
@@ -334,6 +340,7 @@ end Keywords;
 
 - When I run `bin/ada_caser --pipe --language=ada_2012 keywords.adb`
 - then the output contains `abstract`
+- and then the output contains `aliased`
 - and then the output contains `overriding`
 - and then the output contains `some`
 
@@ -341,6 +348,7 @@ end Keywords;
 
 - When I run `bin/ada_caser --pipe --language=ada_2022 keywords.adb`
 - then the output contains `abstract`
+- and then the output contains `aliased`
 - and then the output contains `overriding`
 - and then the output contains `some`
 
@@ -348,6 +356,7 @@ end Keywords;
 
 - When I run `bin/ada_caser --pipe keywords.adb`
 - then the output contains `abstract`
+- and then the output contains `aliased`
 - and then the output contains `overriding`
 - and then the output contains `some`
 

@@ -1,0 +1,7 @@
+--  SPDX-License-Identifier: Apache-2.0
+--  Copyright (C) 2024 Simon Wright <simon@pushface.org>
+
+--  This is a dummy project to be used when there isn't an actual one.
+
+abstract project Default is
+end Default;

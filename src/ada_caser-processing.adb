@@ -15,80 +15,9 @@ with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
 package body Ada_Caser.Processing is
 
-   procedure Process_Without_Project
-     (Unit : Libadalang.Analysis.Analysis_Unit; File : File_Type)
-   is
-      use Libadalang;
-
-      Token : Common.Token_Reference := Analysis.First_Token (Unit);
-      use type Common.Token_Reference;
-      use type Common.Token_Kind;
-      use type Common.Language_Version;
-
-      use Ada.Strings.Wide_Wide_Fixed;
-      use Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants;
-   begin
-      Messages.Info ("processing " & Unit.Get_Filename);
-      while Token /= Common.No_Token loop
-
-         if not Options.Report_Diagnostics then
-            case Common.Kind (Common.Data (Token)) is
-               when Common.Ada_Identifier =>
-                  if Analysis.Is_Keyword (Token, Options.Language) then
-                     --  Keywords for language versions > 83 are
-                     --  parsed as indentifiers.
-                     Put
-                       (File,
-                        Translate (Common.Text (Token), Lower_Case_Map));
-                  elsif Options.Language > Common.Ada_83
-                    and then Translate (Common.Text (Token), Lower_Case_Map)
-                         = "aliased"
-                  then
-                     --  "aliased" isn't recognised as a keyword
-                     --  (libadalang #971).
-                     Put
-                       (File,
-                        Translate (Common.Text (Token), Lower_Case_Map));
-                  else
-                     Put
-                       (File,
-                        Dictionaries.Normalize (Common.Text (Token)));
-                  end if;
-               when Common.Ada_Char |
-                 Common.Ada_Comment |
-                 Common.Ada_Integer |
-                 Common.Ada_String =>
-                  Put
-                    (File,
-                     Common.Text (Token));
-               when Common.Ada_Whitespace =>
-                  for Ch of Common.Text (Token) loop
-                     --  output an LF by calling New_Line, so
-                     --  [Wide_Wide_]Text_IO realises that the end of
-                     --  the file doesn't need an extra blank line.
-
-                     if Ch = Wide_Wide_Character'Val (16#0000_000a#) then
-                        New_Line (File);
-                     else
-                        Put (File, Ch);
-                     end if;
-                  end loop;
-               when others =>
-                  Put
-                    (File,
-                     Translate (Common.Text (Token), Lower_Case_Map));
-            end case;
-         else
-            Put (Common.Text (Token));
-            Put (" is ");
-            Put (Common.Kind (Common.Data (Token))'Wide_Wide_Image);
-            New_Line;
-         end if;
-
-         Token := Common.Next (Token);
-      end loop;
-      Messages.Info (Unit.Get_Filename & " done.");
-   end Process_Without_Project;
+   --------------------------
+   -- Process_With_Project --
+   --------------------------
 
    procedure Process_With_Project
      (Unit : Libadalang.Analysis.Analysis_Unit; File : File_Type)
@@ -100,6 +29,10 @@ package body Ada_Caser.Processing is
       --  Holds the Defining Name of those tokens that have one.
       Xrefs : array (1 .. Token_Count (Unit)) of Analysis.Defining_Name
         := (others => No_Defining_Name);
+
+      -------------------------
+      -- Find_Defining_Names --
+      -------------------------
 
       function Find_Defining_Names (Node : Analysis.Ada_Node'Class)
          return Common.Visit_Status
@@ -138,6 +71,10 @@ package body Ada_Caser.Processing is
          end if;
          return Into;
       end Find_Defining_Names;
+
+      ---------------------------
+      -- Replace_Defined_Names --
+      ---------------------------
 
       procedure Replace_Defined_Names is
          Token : Common.Token_Reference := Analysis.First_Token (Unit);
@@ -226,16 +163,17 @@ package body Ada_Caser.Processing is
       Messages.Info (Unit.Get_Filename & " done.");
    end Process_With_Project;
 
+   -------------
+   -- Process --
+   -------------
+
    procedure Process (Unit : Libadalang.Analysis.Analysis_Unit) is
       Result_File : File_Type;
    begin
+      --  Create a temporary file, deleted on program exit.
       Create (Result_File, Name => "", Mode => Out_File);
 
-      if Options.Project = "" then
-         Process_Without_Project (Unit, Result_File);
-      else
-         Process_With_Project (Unit, Result_File);
-      end if;
+      Process_With_Project (Unit, Result_File);
 
       Reset (Result_File, Mode => In_File);
 

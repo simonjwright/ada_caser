@@ -19,10 +19,24 @@ private package Ada_Caser.Utilities is
    end record;
    type Spans is array (Natural range <>) of Span;
 
+   ----------------
+   -- Find_Spans --
+   ----------------
+
    function Find_Spans (S : String; Splitting_At : Character) return Spans;
 
    function Find_Spans
      (S : Wide_Wide_String; Splitting_At : Wide_Wide_Character)
       return Spans;
+
+   ---------------------
+   -- Default_Project --
+   ---------------------
+
+   --  Libadalang works best with a project. The default project (in
+   --  share/ada_caser/default.gpr) doesn't have any internal
+   --  information but with it ada_caser can find code in the standard
+   --  library.
+   function Default_Project return String;
 
 end Ada_Caser.Utilities;
