@@ -23,7 +23,9 @@ There are some exceptions to the normal rule: for example, `IO` in `Ada.Text_IO`
 
 ### Processing with a GNAT Project
 
-`ada_caser` reads the project file, and the tree of referenced projects. It then uses Libadalang to find the declaration (if any) of each identifier in the input source code and replaces the source text with that of the declaration.
+If a project file is supplied, `ada_caser` reads the project file, and the tree of referenced projects. It then uses Libadalang to find the declaration (if any) of each identifier in the input source code and replaces the source text with that of the declaration.
+
+If no project file is supplied, `ada_caser` uses a default project which allows it to access the standard library (`Ada*`, `GNAT*`, `Interfaces*`).
 
 So, for example,
 ```
@@ -39,9 +41,11 @@ If you're using `ada_caser` with a project in an Alire crate, you should run it 
 
 ### Processing with dictionaries
 
-`ada_caser`'s default processing is to convert the first character of each word in identifiers to upper-case (reserved words are converted to lower-case, other tokens are left unchanged).
+For previously-declared identifiers, `ada_caser` will convert the identifier to the casing with which it was declared.
 
-Considering `ada.text_io`, `ada` is a single-word identifier and will be rendered as `Ada`, while `text_io` is a two-word identifier which will be rendered as `Text_Io`.
+The default processing of undeclared identifiers is to convert the first character of each word to upper-case (reserved words are converted to lower-case, other tokens are left unchanged).
+
+Considering `proj.regular_io`, `proj` is a single-word identifier and will be rendered as `Proj`, while `regular_io` is a two-word identifier which will be rendered as `Regular_Io`.
 
 For identifiers, the default behaviour can be altered using exception dictionaries.
 
@@ -59,9 +63,25 @@ An exception dictonary containing
 GNAT
 *IO
 ```
-would render `gnat.command_line` as `GNAT.Command_Line`, `gnat_support` as `Gnat_Support`, and `ada.text_io` as `Ada.Text_IO`.
+would render `gnat.command_line` as `GNAT.Command_Line`, `gnat_support` as `Gnat_Support`, and `ada.text_io` as `Ada.Text_IO`. Note, this casing is in fact provided by `ada_caser` for standard library projects (which contain the `Ada` and `GNAT` package hierarchies), but probably not for embedded projects.
 
 It is an error to provide differing exceptions, for example `Id` and `*ID`.
+
+### Installation
+
+#### Building
+
+For the present, because of issues related to the use of aggregates in `Langkit_Support` ([GCC PR 104751](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=104751)), it's necessary to build using
+```
+alr build -- -gnatwJ
+```
+
+#### Installation
+
+`alr install` rebuilds the crate without the opportunity to provide extra switches, as above. This means you have to install "by hand":
+```
+alr exec -- gprinstall -f -P ada_caser.gpr -p --prefix=$HOME/.alire
+```
 
 ### Testing
 

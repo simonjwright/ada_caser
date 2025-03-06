@@ -5,6 +5,7 @@ with Ada_Caser.Dictionaries;
 with Ada_Caser.Messages;
 with Ada_Caser.Options;
 with Ada_Caser.Processing;
+with Ada_Caser.Utilities;
 with Ada_Caser.Version;
 with GNAT.Command_Line;
 with GNATCOLL.Projects;
@@ -34,44 +35,45 @@ begin
       return;
    end if;
 
-   if Options.Project = "" then
-      Context := Analysis.Create_Context (Charset => Options.Character_Set);
-   else
-      Set_Up_Provider :
-      declare
-         Env      : GNATCOLL.Projects.Project_Environment_Access;
-         Project  : constant GNATCOLL.Projects.Project_Tree_Access
-           := new GNATCOLL.Projects.Project_Tree;
-         Provider : Analysis.Unit_Provider_Reference;
+   Set_Up_Provider :
+   declare
+      Project_File : constant String :=
+        (if Options.Project /= ""
+         then Options.Project
+         else Utilities.Default_Project);
 
-         function To_Virtual_File (Name : String)
-            return GNATCOLL.VFS.Virtual_File;
-         function To_Virtual_File (Name : String)
-            return GNATCOLL.VFS.Virtual_File
-         is
-            use GNATCOLL.VFS;
-         begin
-            return Create_From_Base (Filesystem_String (Name));
-         end To_Virtual_File;
+      Env      : GNATCOLL.Projects.Project_Environment_Access;
+      Project  : constant GNATCOLL.Projects.Project_Tree_Access
+        := new GNATCOLL.Projects.Project_Tree;
+      Provider : Analysis.Unit_Provider_Reference;
+
+      function To_Virtual_File (Name : String)
+         return GNATCOLL.VFS.Virtual_File;
+      function To_Virtual_File (Name : String)
+         return GNATCOLL.VFS.Virtual_File
+      is
+         use GNATCOLL.VFS;
       begin
-         GNATCOLL.Projects.Initialize (Env);
+         return Create_From_Base (Filesystem_String (Name));
+      end To_Virtual_File;
+   begin
+      Messages.Info ("using project file: " & Project_File);
 
-         begin
-            Project.Load (To_Virtual_File (Options.Project), Env);
-         exception
-            when GNATCOLL.Projects.Invalid_Project =>
-               Ada.Text_IO.Put_Line
-                 ("error: invalid project " & Options.Project);
-               Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
-               return;
-         end;
+      GNATCOLL.Projects.Initialize (Env);
 
-         Provider := Project_Provider.Create_Project_Unit_Provider
-             (Tree => Project, Env => Env);
+      begin
+         Project.Load (To_Virtual_File (Project_File), Env);
+      exception
+         when GNATCOLL.Projects.Invalid_Project =>
+            Messages.Error ("invalid project " & Project_File, Quit => True);
+      end;
 
-         Context := Analysis.Create_Context (Unit_Provider => Provider);
-      end Set_Up_Provider;
-   end if;
+      Provider := Project_Provider.Create_Project_Unit_Provider
+          (Tree => Project, Env => Env);
+
+      Context := Analysis.Create_Context
+          (Unit_Provider => Provider, Charset => Options.Character_Set);
+   end Set_Up_Provider;
 
    Arguments :
    loop
@@ -87,7 +89,9 @@ begin
             Unit : constant Analysis.Analysis_Unit :=
               Context.Get_From_File (Arg);
          begin
-            if Unit.Has_Diagnostics then
+            if not Unit.Has_Diagnostics then
+               Processing.Process (Unit);
+            else
                Messages.Error ("in " & Unit.Get_Filename);
                Process_Diagnostics :
                declare
@@ -119,8 +123,6 @@ begin
                      end Process_One_Diagnostic;
                   end loop;
                end Process_Diagnostics;
-            else
-               Processing.Process (Unit);
             end if;
          end Process_File;
       end;
