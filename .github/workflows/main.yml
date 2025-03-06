@@ -35,7 +35,9 @@ jobs:
     - name: Run (not Windows)
       if: " ! startsWith(matrix.os, 'windows') "
       run: bin/ada_caser --version
+      run: bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
 
     - name: Run (Windows)
       if: startsWith(matrix.os, 'windows')
       run: bin\ada_caser --version
+      run: bin/ada_caser --verbose --project ada_caser --pipe src/ada_caser-version.ad?
