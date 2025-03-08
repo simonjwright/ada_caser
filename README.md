@@ -27,15 +27,7 @@ If a project file is supplied, `ada_caser` reads the project file, and the tree 
 
 If no project file is supplied, `ada_caser` uses a default project which allows it to access the standard library (`Ada*`, `GNAT*`, `Interfaces*`).
 
-So, for example,
-```
-package duration_io is new ada.text_io.fixed_io (duration);
-```
-will be replaced by
-```
-package duration_io is new Ada.Text_IO.Fixed_IO (Duration);
-```
-(`duration_io` isn't altered because this _is_ its declaration.)
+So, for example, `with ada.text_io.fixed_io;` will be replaced by `with Ada.Text_IO.Fixed_IO (Duration);`.
 
 If you're using `ada_caser` with a project in an Alire crate, you should run it in an `alr exec` context so that it can find all the referenced projects.
 
@@ -63,34 +55,22 @@ An exception dictonary containing
 GNAT
 *IO
 ```
-would render `gnat.command_line` as `GNAT.Command_Line`, `gnat_support` as `Gnat_Support`, and `ada.text_io` as `Ada.Text_IO`. Note, this casing is in fact provided by `ada_caser` for standard library projects (which contain the `Ada` and `GNAT` package hierarchies), but probably not for embedded projects.
+would render `gnat.command_line` as `GNAT.Command_Line`, `gnat_support` a s `Gnat_Support`, and `ada.text_io` as `Ada.Text_IO`. Note, this casing is in fact provided by `ada_caser` for standard library projects (which contain the `Ada`, `GNAT` and `Interfaces` package hierarchies), but probably not for embedded projects.
 
 It is an error to provide differing exceptions, for example `Id` and `*ID`.
 
 ### Installation
 
-#### Building
-
-For the present, because of issues related to the use of aggregates in `Langkit_Support` ([GCC PR 104751](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=104751)), it's necessary to build using
-```
-alr build -- -gnatwJ
-```
-
-#### Installation
-
-`alr install` rebuilds the crate without the opportunity to provide extra switches, as above. This means you have to install "by hand":
-```
-alr exec -- gprinstall -f -P ada_caser.gpr -p --prefix=$HOME/.alire
-```
+Build with `alr build`, install with `alr install`.
 
 ### Testing
 
-Testing is done using Black Box Testing (`bbt`), available via Alire. See the [test scenarios](test.md). 
+Testing is done using [Black Box Testing](https://github.com/LionelDraghi/bbt) (`bbt`), available via Alire. See the [test scenarios](test.md). 
 
-These scenarios demonstrate `ada_caser`'s features.
+These scenarios also demonstrate `ada_caser`'s features.
 
 Run using
 ```
-bbt --exact_match --cleanup test.md
+bbt --exact_match --yes --cleanup test.md
 ```
 
