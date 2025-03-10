@@ -27,7 +27,7 @@ If a project file is supplied, `ada_caser` reads the project file, and the tree 
 
 If no project file is supplied, `ada_caser` uses a default project which allows it to access the standard library (`Ada*`, `GNAT*`, `Interfaces*`).
 
-So, for example, `with ada.text_io.fixed_io;` will be replaced by `with Ada.Text_IO.Fixed_IO;`.
+So, for example, `ada.text_io.fixed_io` will be replaced by `Ada.Text_IO.Fixed_IO`.
 
 If you're using `ada_caser` with a project in an Alire crate, you should run it in an `alr exec` context so that it can find all the referenced projects.
 
